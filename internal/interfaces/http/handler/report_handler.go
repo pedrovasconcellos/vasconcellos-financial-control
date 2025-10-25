@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"github.com/vasconcellos/finance-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/finance-control/internal/usecase"
@@ -19,15 +20,19 @@ func NewReportHandler(reportUseCase *usecase.ReportUseCase) *ReportHandler {
 }
 
 func (h *ReportHandler) Summary(c *gin.Context) {
+	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
 	if !ok {
+		log.Warn("unauthorized summary report attempt")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
 	from, to := parseSummaryRange(c.Query("from"), c.Query("to"))
+	log.Info("generating summary report", zap.String("user_id", user.ID), zap.Time("from", from), zap.Time("to", to))
 	response, err := h.reportUseCase.GetSummary(c.Request.Context(), user.ID, from, to)
 	if err != nil {
+		log.Error("failed to generate summary report", zap.Error(err))
 		respondError(c, err)
 		return
 	}

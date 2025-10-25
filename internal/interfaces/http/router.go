@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"github.com/vasconcellos/finance-control/internal/interfaces/http/handler"
 	"github.com/vasconcellos/finance-control/internal/interfaces/http/middleware"
@@ -20,11 +21,15 @@ type RouterParams struct {
 	ReportHandler      *handler.ReportHandler
 	AuthMiddleware     *middleware.AuthMiddleware
 	AllowedOrigins     []string
+	Logger             *zap.Logger
 }
 
 func NewRouter(params RouterParams) *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+	if params.Logger != nil {
+		engine.Use(middleware.NewRequestLoggerMiddleware(params.Logger).Handle())
+	}
 	engine.Use(cors.New(cors.Config{
 		AllowOrigins:     params.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},

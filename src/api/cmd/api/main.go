@@ -114,6 +114,7 @@ func main() {
 		ReportHandler:      reportHandler,
 		AuthMiddleware:     authMiddleware,
 		AllowedOrigins:     cfg.Security.AllowedOrigins,
+		Logger:            logr,
 	})
 
 	server := &http.Server{
