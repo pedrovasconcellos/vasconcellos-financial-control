@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -76,7 +77,7 @@ func TestTransactionUseCaseAttachReceipt(t *testing.T) {
 
 	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, storage, "queue")
 
-	resp, err := uc.AttachReceipt(context.Background(), "user", "txn", "receipt.pdf", "application/pdf", []byte("filedata"))
+	resp, err := uc.AttachReceipt(context.Background(), "user", "txn", "receipt.pdf", "application/pdf", bytes.NewReader([]byte("filedata")))
 	if err != nil {
 		t.Fatalf("não esperava erro: %v", err)
 	}

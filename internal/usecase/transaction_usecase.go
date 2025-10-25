@@ -1,10 +1,10 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/google/uuid"
@@ -200,7 +200,7 @@ func (uc *TransactionUseCase) ListTransactions(ctx context.Context, userID strin
 	return response, nil
 }
 
-func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, transactionID string, filename string, contentType string, data []byte) (*dto.TransactionResponse, error) {
+func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, transactionID string, filename string, contentType string, data io.Reader) (*dto.TransactionResponse, error) {
 	transaction, err := uc.transactionRepo.GetByID(ctx, transactionID, userID)
 	if err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, 
 	}
 
 	objectKey := fmt.Sprintf("users/%s/transactions/%s/%s", userID, transactionID, filename)
-	if _, err := uc.storage.Upload(ctx, objectKey, bytes.NewReader(data), contentType); err != nil {
+	if _, err := uc.storage.Upload(ctx, objectKey, data, contentType); err != nil {
 		return nil, err
 	}
 	transaction.ReceiptObject = &objectKey

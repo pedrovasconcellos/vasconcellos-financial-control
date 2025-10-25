@@ -116,6 +116,13 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 		return
 	}
 
+	const maxReceiptSize = 5 * 1024 * 1024 // 5MB
+	if file.Size > maxReceiptSize {
+		log.Warn("receipt exceeds size limit", zap.Int64("size", file.Size), zap.Int("limit_bytes", maxReceiptSize))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
+		return
+	}
+
 	opened, err := file.Open()
 	if err != nil {
 		log.Error("failed to open receipt", zap.Error(err))
@@ -124,14 +131,8 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 	}
 	defer opened.Close()
 
-	data, err := io.ReadAll(opened)
-	if err != nil {
-		log.Error("failed to read receipt content", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load file"})
-		return
-	}
-
-	response, err := h.transactionUseCase.AttachReceipt(c.Request.Context(), user.ID, transactionID, file.Filename, file.Header.Get("Content-Type"), data)
+	limitedReader := io.LimitReader(opened, int64(maxReceiptSize)+1)
+	response, err := h.transactionUseCase.AttachReceipt(c.Request.Context(), user.ID, transactionID, file.Filename, file.Header.Get("Content-Type"), limitedReader)
 	if err != nil {
 		log.Error("failed to attach receipt", zap.Error(err))
 		respondError(c, err)
