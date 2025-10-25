@@ -25,11 +25,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o /workspace/bin/healthcheck ./cmd/tools/healthcheck
 
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/base-debian12 AS runtime
+FROM --platform=$TARGETPLATFORM scratch AS runtime
 WORKDIR /app
 COPY --from=builder /workspace/bin/api /app/api
 COPY --from=builder /workspace/bin/healthcheck /app/healthcheck
 COPY config /app/config
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ENV CONFIG_FILE=/app/config/local_credentials.yaml
 EXPOSE 8080
