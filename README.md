@@ -276,3 +276,17 @@ The React app looks for `VITE_API_URL` (defaults to `http://localhost:8080/api/v
 3. Extend the documentation in `PROJECT.md` whenever architectural decisions evolve.
 
 Happy hacking! 🚀
+
+---
+
+### Arquivos/pastas relevantes ignorados pelo Git
+
+- `config/local_credentials.yaml` – configuração local com credenciais reais.
+- Diretórios gerados em builds: `bin/`, `build/`, `dist/`, `coverage/`, `node_modules/`, `vendor/`.
+- Arquivos de estado/cache do Terraform: `infra/terraform/.terraform/`, `.terraform.lock.hcl`, `*.tfstate`, `*.tfstate.backup`.
+- Arquivos de ambiente local: `.env`, `.env.*`, além de logs e temporários (`*.log`, `*.tmp`).
+- `docker-compose.override.yml` para customizações locais.
+
+### Localização dos testes unitários
+
+Os testes unitários em Go ficam junto dos pacotes correspondentes (arquivos `_test.go`). Atualmente concentram-se em `internal/usecase/` (ex.: `internal/usecase/account_usecase_test.go`, `internal/usecase/transaction_usecase_test.go`) e `internal/config/config_test.go`.
