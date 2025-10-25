@@ -22,6 +22,7 @@ import (
 	awsSQS "github.com/vasconcellos/finance-control/internal/infrastructure/aws/sqs"
 	"github.com/vasconcellos/finance-control/internal/infrastructure/logger"
 	"github.com/vasconcellos/finance-control/internal/infrastructure/mongodb"
+	"github.com/vasconcellos/finance-control/internal/infrastructure/security"
 	interfacesHTTP "github.com/vasconcellos/finance-control/internal/interfaces/http"
 	"github.com/vasconcellos/finance-control/internal/interfaces/http/handler"
 	"github.com/vasconcellos/finance-control/internal/interfaces/http/middleware"
@@ -90,7 +91,12 @@ func main() {
 	userUseCase := usecase.NewUserUseCase(userRepo)
 	accountUseCase := usecase.NewAccountUseCase(accountRepo)
 	categoryUseCase := usecase.NewCategoryUseCase(categoryRepo)
-	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, categoryRepo, queuePublisher, storage, cfg.Queue.TransactionQueue)
+	encryptionKey, keyErr := security.DecodeKeyBase64(cfg.Security.EncryptionKey)
+	if keyErr != nil {
+		logr.Fatal("invalid encryption key", zap.Error(keyErr))
+	}
+
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, categoryRepo, queuePublisher, storage, cfg.Queue.TransactionQueue, encryptionKey)
 	budgetUseCase := usecase.NewBudgetUseCase(budgetRepo)
 	goalUseCase := usecase.NewGoalUseCase(goalRepo)
 	reportUseCase := usecase.NewReportUseCase(reportRepo)
@@ -114,7 +120,7 @@ func main() {
 		ReportHandler:      reportHandler,
 		AuthMiddleware:     authMiddleware,
 		AllowedOrigins:     cfg.Security.AllowedOrigins,
-		Logger:            logr,
+		Logger:             logr,
 	})
 
 	server := &http.Server{

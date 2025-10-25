@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/vasconcellos/finance-control/internal/domain/errors"
 	"github.com/vasconcellos/finance-control/internal/domain/port"
 	"github.com/vasconcellos/finance-control/internal/domain/repository"
+	"github.com/vasconcellos/finance-control/internal/infrastructure/security"
 )
 
 type TransactionUseCase struct {
@@ -23,6 +25,7 @@ type TransactionUseCase struct {
 	queuePublisher  port.QueuePublisher
 	storage         port.ObjectStorage
 	eventQueueName  string
+	encryptionKey   []byte
 }
 
 func NewTransactionUseCase(
@@ -32,6 +35,7 @@ func NewTransactionUseCase(
 	queuePublisher port.QueuePublisher,
 	storage port.ObjectStorage,
 	eventQueueName string,
+	encryptionKey []byte,
 ) *TransactionUseCase {
 	return &TransactionUseCase{
 		transactionRepo: transactionRepo,
@@ -40,6 +44,7 @@ func NewTransactionUseCase(
 		queuePublisher:  queuePublisher,
 		storage:         storage,
 		eventQueueName:  eventQueueName,
+		encryptionKey:   encryptionKey,
 	}
 }
 
@@ -213,8 +218,21 @@ func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, 
 		return nil, fmt.Errorf("object storage disabled")
 	}
 
+	payload, err := io.ReadAll(data)
+	if err != nil {
+		return nil, err
+	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("empty receipt")
+	}
+
+	encryptedPayload, err := security.EncryptAESGCM(payload, uc.encryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
 	objectKey := fmt.Sprintf("users/%s/transactions/%s/%s", userID, transactionID, filename)
-	if _, err := uc.storage.Upload(ctx, objectKey, data, contentType); err != nil {
+	if _, err := uc.storage.Upload(ctx, objectKey, bytes.NewReader(encryptedPayload), contentType); err != nil {
 		return nil, err
 	}
 	transaction.ReceiptObject = &objectKey

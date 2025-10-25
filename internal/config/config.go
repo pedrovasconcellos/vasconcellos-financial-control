@@ -55,7 +55,8 @@ type AuthConfig struct {
 }
 
 type SecurityConfig struct {
-	AllowedOrigins []string
+    AllowedOrigins []string
+    EncryptionKey  string
 }
 
 type StorageConfig struct {
@@ -162,9 +163,10 @@ func LoadConfig() (*Config, error) {
 			Auth: AuthConfig{
 				Mode: viper.GetString("auth.mode"),
 			},
-			Security: SecurityConfig{
-				AllowedOrigins: viper.GetStringSlice("security.allowedOrigins"),
-			},
+            Security: SecurityConfig{
+                AllowedOrigins: viper.GetStringSlice("security.allowedOrigins"),
+                EncryptionKey:  viper.GetString("security.encryptionKey"),
+            },
 			Queue: QueueConfig{
 				TransactionQueue: viper.GetString("queue.transactionQueue"),
 			},

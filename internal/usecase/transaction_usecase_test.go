@@ -20,7 +20,7 @@ func TestTransactionUseCaseRecordTransactionValorInvalido(t *testing.T) {
 		"cat": {ID: "cat", Type: entity.CategoryTypeExpense},
 	}}
 
-	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, nil, nil, "queue")
+	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, nil, nil, "queue", nil)
 
 	_, err := uc.RecordTransaction(context.Background(), "user", dto.CreateTransactionRequest{
 		AccountID:  "acc",
@@ -42,7 +42,7 @@ func TestTransactionUseCaseRecordTransactionDespesa(t *testing.T) {
 	}}
 	queue := &queuePublisherStub{}
 
-	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, nil, "finance-queue")
+	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, nil, "finance-queue", nil)
 
 	_, err := uc.RecordTransaction(context.Background(), "user", dto.CreateTransactionRequest{
 		AccountID:  "acc",
@@ -75,7 +75,7 @@ func TestTransactionUseCaseAttachReceipt(t *testing.T) {
 	queue := &queuePublisherStub{}
 	storage := &objectStorageStub{}
 
-	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, storage, "queue")
+	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, storage, "queue", nil)
 
 	resp, err := uc.AttachReceipt(context.Background(), "user", "txn", "receipt.pdf", "application/pdf", bytes.NewReader([]byte("filedata")))
 	if err != nil {

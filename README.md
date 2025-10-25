@@ -45,6 +45,7 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
 - Node.js **20.19+** (necessário para `vite@7`)
 - Docker + Docker Compose
 - AWS CLI configurada com credenciais apropriadas (para homolog/produção)
+- Chave de criptografia AES-256 (32 bytes base64) para proteção de recibos (`security.encryptionKey`)
 
 ### 2. Configuração do ambiente **dev** (local)
 
@@ -53,6 +54,7 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    cp config/local_credentials.example.yaml config/local_credentials.yaml
    ```
    Ajuste campos se necessário; os padrões já apontam para serviços locais via Docker.
+   Gere uma chave de criptografia (ex.: `openssl rand -base64 32`) e preencha `security.encryptionKey`.
 
 2. Suba os serviços de apoio com Docker Compose:
    ```bash
@@ -212,6 +214,7 @@ Mesma topologia de homolog, com os seguintes cuidados adicionais:
 | `aws.*` | Região, chaves e endpoints; em ambiente AWS deixe `endpoint` vazio para usar o serviço real. |
 | `queue.transactionQueue` | Nome lógico da fila; apontado para uma fila distinta por ambiente. |
 | `storage.receiptBucket` | Bucket diferente por ambiente (ex.: `finance-control-receipts-dev|hml|prd`). |
+| `security.encryptionKey` | Chave AES-256 em base64 utilizada para criptografar recibos antes do upload ao S3. |
 
 Idealmente:
 - Mantenha três arquivos de configuração:
