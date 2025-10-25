@@ -18,7 +18,7 @@
 
 ## Integração com AWS
 
-- SDK v2 da AWS é utilizado com wrappers finos (`internal/infrastructure/aws`) para S3 (upload/presign), SQS (publicação) e Cognito (autenticação).
+- SDK v2 da AWS é utilizado com wrappers finos (`internal/infrastructure/aws`) para S3 (upload/presign), SQS (publicação) e Cognito (autenticação). Informações sensíveis (ex.: `security.encryptionKey`) são injetadas via Secrets Manager/Parameter Store.
 - A configuração suporta LocalStack através de `aws.useLocalstack` e `aws.endpoint`, permitindo rodar tudo localmente sem credenciais reais.
 - SQS recebe eventos de transações para processamento assíncrono. A lambda atualiza os gastos dos orçamentos conforme as mensagens chegam.
 - O upload de recibos usa S3 com geração de URL pré-assinada para consumo pelo frontend.
@@ -31,7 +31,7 @@
 
 ## Configuração
 
-- `CONFIG_FILE` aponta para um YAML com todas as credenciais. Em homologação/produção esse arquivo deve ser materializado via Secrets Manager.
+- `CONFIG_FILE` aponta para um YAML com credenciais não sensíveis. Em homologação/produção esse arquivo é materializado via Secrets Manager e a chave AES (`security.encryptionKey`) é lida de um secret dedicado.
 - `config/local_credentials.example.yaml` documenta todas as chaves e serve como ponto de partida para desenvolvimento.
 - O carregamento com Viper permite mesclar defaults, arquivo e variáveis de ambiente.
 
