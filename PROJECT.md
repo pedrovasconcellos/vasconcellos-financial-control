@@ -7,8 +7,8 @@
   - `internal/usecase`: orquestração de regras de negócio sem depender de detalhes de infraestrutura.
   - `internal/infrastructure`: adaptadores para MongoDB, AWS (Cognito, S3, SQS), autenticação e logger.
   - `internal/interfaces/http`: entrega HTTP construída com Gin, incluindo middleware de autenticação.
-- O serviço HTTP principal está em `src/api/cmd/api/main.go`. Toda construção de dependências acontece ali, mantendo os módulos injetáveis.
-- A lambda (`src/lambdas/transaction_processor`) reutiliza os mesmos repositórios e configurações do backend, garantindo consistência e evitando duplicação de lógica.
+- O serviço HTTP principal está em `cmd/api/main.go`. Toda construção de dependências acontece ali, mantendo os módulos injetáveis.
+- A lambda (`cmd/lambdas/transaction_processor`) reutiliza os mesmos repositórios e configurações do backend, garantindo consistência e evitando duplicação de lógica.
 
 ## Persistência e Dados
 
@@ -46,7 +46,7 @@
 
 - `docker-compose.yml` sobe a API, frontend, MongoDB e LocalStack. Script `scripts/localstack/00-bootstrap.sh` cria fila, bucket e estrutura Cognito automaticamente.
 - Makefile centraliza comandos (`api-build`, `api-test`, `lambda-build`, `frontend-build`).
-- Para rodar localmente sem Docker basta informar `CONFIG_FILE=config/local_credentials.yaml`, subir MongoDB e invocar `go run ./src/api/cmd/api`.
+- Para rodar localmente sem Docker basta informar `CONFIG_FILE=config/local_credentials.yaml`, subir MongoDB e invocar `go run ./cmd/api`.
 
 ## Validação e Qualidade
 

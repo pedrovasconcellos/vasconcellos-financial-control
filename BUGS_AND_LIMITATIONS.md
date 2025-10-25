@@ -43,7 +43,7 @@ Documento preparado por um arquiteto de software para orientar correções futur
 - **Correção**: Introduzir sessão/transaction no MongoDB ou compensação outbox.
 
 ### Lambda atualiza orçamento somando `payload.Amount` absoluto
-- **Contexto**: `src/lambdas/transaction_processor/main.go` trata toda mensagem como despesa.  
+- **Contexto**: `cmd/lambdas/transaction_processor/main.go` trata toda mensagem como despesa.  
 - **Problema**: Não diferencia receitas vs. despesas → metas de orçamento infladas para transações de crédito.  
 - **Correção**: Incluir campo de tipo (income/expense) e ajustar lógica para receitas não subirem o gasto.
 

@@ -4,8 +4,8 @@ This repository hosts a full-stack personal finance platform. When interacting w
 
 - **Architecture:** The Go backend follows clean architecture. Domain types, repositories, and use cases live under `internal/`. Adapters (HTTP handlers, MongoDB repositories, AWS clients) must remain thin and respect dependency direction (outer layers depend on inner ones only).
 - **Entrypoints:**
-  - API bootstraps from `src/api/cmd/api/main.go`.
-  - AWS Lambda handler is under `src/lambdas/transaction_processor/main.go` and shares the same domain packages.
+  - API bootstraps from `cmd/api/main.go`.
+  - AWS Lambda handler is under `cmd/lambdas/transaction_processor/main.go` and shares the same domain packages.
   - React application lives in `frontend/` (Vite + Material UI).
 - **Configuration:** Prefer reading configuration via `internal/config.LoadConfig()` which merges environment variables and optional `CONFIG_FILE` YAML. Local development uses `config/local_credentials.yaml` (gitignored) with `auth.mode=local`.
 - **AWS integrations:** Interact with AWS through the thin wrappers located in `internal/infrastructure/aws`. They already handle LocalStack endpoints. For Cognito, rely on the auth providers under `internal/infrastructure/auth`.

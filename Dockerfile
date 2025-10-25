@@ -21,7 +21,7 @@ COPY . .
 # Compila o binário com strip de símbolos para reduzir tamanho
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./src/api/cmd/api
+    go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./cmd/api
 
 FROM --platform=$TARGETPLATFORM gcr.io/distroless/base-debian12
 WORKDIR /app

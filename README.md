@@ -70,10 +70,10 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    ```bash
    # Backend API
    export CONFIG_FILE=config/local_credentials.yaml
-   go run ./src/api/cmd/api
+  go run ./cmd/api
 
    # Lambda (build para testes locais)
-   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./src/lambdas/transaction_processor
+  GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./cmd/lambdas/transaction_processor
 
    # Frontend (com hot reload)
    cd frontend
@@ -119,9 +119,9 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
      ```
      Monte o arquivo de config via volume secreto, ou converta os campos do YAML em variáveis de ambiente.
 
-4. **Deploy da Lambda (`src/lambdas/transaction_processor`)**:
+4. **Deploy da Lambda (`cmd/lambdas/transaction_processor`)**:
    ```bash
-   GOOS=linux GOARCH=amd64 go build -o bootstrap ./src/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bootstrap ./cmd/lambdas/transaction_processor
    zip lambda.zip bootstrap
    aws lambda create-function \
      --function-name finance-transaction-processor-hml \
