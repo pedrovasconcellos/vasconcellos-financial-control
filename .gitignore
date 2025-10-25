@@ -1,0 +1,13 @@
+.DS_Store
+bin/
+build/
+dist/
+coverage/
+node_modules/
+vendor/
+*.log
+*.tmp
+.env
+.env.*
+config/local_credentials.yaml
+docker-compose.override.yml

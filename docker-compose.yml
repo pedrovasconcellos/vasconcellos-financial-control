@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - CONFIG_FILE=/app/config/local_credentials.yaml
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - localstack
+    volumes:
+      - ./config/local_credentials.yaml:/app/config/local_credentials.yaml:ro
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=finance-control
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  localstack:
+    image: localstack/localstack:2.3
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,cognito-idp
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=localstack
+      - AWS_SECRET_ACCESS_KEY=localstack
+    volumes:
+      - "./scripts/localstack:/etc/localstack/init/ready.d"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080/api/v1
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
