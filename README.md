@@ -29,60 +29,173 @@ Finance Control is a clean-architecture Go backend paired with a React + Materia
 └── Makefile               # Handy build/test targets
 ```
 
-## Getting started
+## Operating environments
 
-### 1. Prerequisites
+| Ambiente | Localização | Observações gerais |
+|----------|-------------|--------------------|
+| **dev**  | Máquina do desenvolvedor | Usa Docker Compose com LocalStack (S3/SQS/Cognito) e MongoDB containerizado. Autenticação em modo `local`. |
+| **homolog** | AWS (conta de staging) | Executado em infraestrutura gerenciada (ECS Fargate ou EC2). Requer Cognito, S3, SQS e DocumentDB/Mongo Atlas reais. |
+| **production** | AWS (conta de produção) | Igual à homolog, porém com escalabilidade, autoscaling, logging e observabilidade reforçados. |
 
-- Go 1.24+
-- Node.js 20+
-- Docker & Docker Compose
+O mecanismo de configuração é único para todos os ambientes: a aplicação carrega defaults, e em seguida mescla um arquivo YAML indicado pela variável `CONFIG_FILE` + variáveis de ambiente. Assim conseguimos segregar comportamentos por ambiente apenas definindo um arquivo específico (ou secret) e exportando `CONFIG_FILE`.
 
-### 2. Configure credentials
+### 1. Requisitos mínimos
 
-Copy the template and adjust values as needed (for local use you can keep the defaults):
+- Go **1.24+**
+- Node.js **20.19+** (necessário para `vite@7`)
+- Docker + Docker Compose
+- AWS CLI configurada com credenciais apropriadas (para homolog/produção)
 
-```bash
-cp config/local_credentials.example.yaml config/local_credentials.yaml
-```
+### 2. Configuração do ambiente **dev** (local)
 
-You can extend `local.authUsers` with additional local login accounts. When running against AWS environments, set `CONFIG_FILE` to the path managed by Secrets Manager that exposes Cognito and database credentials.
+1. Copie o template:
+   ```bash
+   cp config/local_credentials.example.yaml config/local_credentials.yaml
+   ```
+   Ajuste campos se necessário; os padrões já apontam para serviços locais via Docker.
 
-### 3. Boot services with Docker
+2. Suba os serviços de apoio com Docker Compose:
+   ```bash
+   docker-compose up --build
+   ```
+   Componentes levantados:
+   - **API** (Go) em `http://localhost:8080`
+   - **Frontend** (Vite) em `http://localhost:5173`
+   - **MongoDB** containerizado (`mongodb://localhost:27017`)
+   - **LocalStack** com S3, SQS e Cognito simulados (script `scripts/localstack/00-bootstrap.sh` cria bucket/fila/pool automaticamente)
 
-```bash
-docker-compose up --build
-```
+3. Executar manualmente (sem Docker) quando necessário:
+   ```bash
+   # Backend API
+   export CONFIG_FILE=config/local_credentials.yaml
+   go run ./src/api/cmd/api
 
-The compose file starts:
+   # Lambda (build para testes locais)
+   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./src/lambdas/transaction_processor
 
-- `api`: Go API listening on `http://localhost:8080`
-- `frontend`: Vite dev server on `http://localhost:5173`
-- `mongo`: MongoDB on `mongodb://localhost:27017`
-- `localstack`: Mimics Cognito, S3, and SQS, with `scripts/localstack/00-bootstrap.sh` provisioning required resources automatically.
+   # Frontend (com hot reload)
+   cd frontend
+   npm install
+   npm run dev
+   ```
+4. Testes:
+   ```bash
+   go test ./...
+   npm run build
+   ```
 
-### 4. Local development without Docker
+### 3. Configuração do ambiente **homolog** (AWS)
 
-```bash
-# Backend
-make api-build
-make api-test
+1. **Recursos AWS necessários** (crie via CloudFormation/Terraform ou manualmente):
+   - Amazon Cognito User Pool e App Client (`USER_PASSWORD_AUTH` habilitado).
+   - Amazon SQS queue (ex.: `finance-transactions-queue`) + DLQ opcional.
+   - Amazon S3 bucket para recibos (`finance-control-receipts-hml`).
+   - Banco de dados compatível com MongoDB (DocumentDB ou MongoDB Atlas).
+   - VPC/Subnets/SG conforme política da empresa.
 
-# Lambda (binary ready for deployment)
-make lambda-build
+2. **Credenciais e configuração**:
+   - Armazene um YAML com as chaves reais (ex.: `config/hml_credentials.yaml`).
+   - Suba o arquivo para **AWS Secrets Manager** ou **Systems Manager Parameter Store**, e faça com que a esteira de deploy materialize o arquivo no container (ou injete variáveis via `APP_PORT`, `MONGO_URI`, `AWS_REGION` etc.).
+   - Garanta `auth.mode=cognito` e endpoints reais (`aws.endpoint` vazio).
 
-# Frontend
-cd frontend
-npm install
-npm run dev
-```
+3. **Deploy da API**:
+   - Construa a imagem:
+     ```bash
+     docker build -t finance-api:latest .
+     ```
+   - Publique em um registry (ECR):
+     ```bash
+     aws ecr create-repository --repository-name finance-api --region us-east-1
+     docker tag finance-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-api:latest
+     docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-api:latest
+     ```
+   - Execute em ECS Fargate (recomendado) ou EC2 com Systemd. Configure as variáveis:
+     ```
+     CONFIG_FILE=/app/config/config.yaml   # se arquivo for montado
+     APP_ENVIRONMENT=homolog
+     AWS_REGION=us-east-1
+     ```
+     Monte o arquivo de config via volume secreto, ou converta os campos do YAML em variáveis de ambiente.
 
-Set `CONFIG_FILE=config/local_credentials.yaml` before launching the API locally to leverage the offline credentials.
+4. **Deploy da Lambda (`src/lambdas/transaction_processor`)**:
+   ```bash
+   GOOS=linux GOARCH=amd64 go build -o bootstrap ./src/lambdas/transaction_processor
+   zip lambda.zip bootstrap
+   aws lambda create-function \
+     --function-name finance-transaction-processor-hml \
+     --zip-file fileb://lambda.zip \
+     --handler bootstrap \
+     --runtime provided.al2 \
+     --role arn:aws:iam::<ACCOUNT_ID>:role/<LAMBDA_ROLE>
+   ```
+   Configure variáveis da lambda:
+   ```
+   CONFIG_FILE=/opt/config/config.yaml   # se montado via Lambda layer/S3
+   AWS_REGION=us-east-1
+   AUTH_MODE=cognito
+   ```
+   Conecte a fila SQS como trigger e habilite DLQ.
 
-### 5. Running tests and builds
+5. **Frontend**:
+   - Build estático:
+     ```bash
+     cd frontend
+     npm install
+     npm run build
+     ```
+   - Faça upload do conteúdo de `frontend/dist` para um bucket S3 público (com CloudFront) ou sirva via container Nginx.
+   - Configure `VITE_API_URL` (ou `REACT_APP_API_URL`) apontando para o endpoint da API em homolog (ex.: `https://api-hml.suaempresa.com/api/v1`).
 
-- **Go tests:** `go test ./...`
-- **Lambda build:** `GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./src/lambdas/transaction_processor`
-- **Frontend build:** `npm run build`
+### 4. Configuração do ambiente **production** (AWS)
+
+Mesma topologia de homolog, com os seguintes cuidados adicionais:
+
+- **Segurança**:
+  - Restrinja `security.allowedOrigins` aos domínios reais (`https://app.suaempresa.com`).
+  - Utilize buckets com criptografia SSE e política de acesso mínimo.
+  - Habilite HTTPS em todos os endpoints (API + Frontend via CloudFront/ALB).
+
+- **Observabilidade**:
+  - Configure logs do container no CloudWatch.
+  - Adicione métricas/alarme (SQS depth, erros 5xx da API, consumo da lambda).
+
+- **Escalabilidade**:
+  - Ajuste `desiredCount`/`autoScaling` no ECS ou use EKS.
+  - Avalie read replicas/sharding no banco MongoDB.
+
+- **Resiliência**:
+  - Ative DLQ para SQS + alarme de mensagens mortas.
+  - Considere idempotência reforçada na lambda (armazenar `transactionId` processado).
+
+### 5. Variáveis e arquivos úteis
+
+| Chave | Descrição |
+|-------|-----------|
+| `CONFIG_FILE` | Caminho para YAML com credenciais (uso obrigatório em homolog/prod via secrets). |
+| `app.environment` | Pode ser `development`, `homolog`, `production` (informativo, mas útil em logs). |
+| `auth.mode` | `local` (dev) ou `cognito` (homolog/prod). |
+| `aws.*` | Região, chaves e endpoints; em ambiente AWS deixe `endpoint` vazio para usar o serviço real. |
+| `queue.transactionQueue` | Nome lógico da fila; apontado para uma fila distinta por ambiente. |
+| `storage.receiptBucket` | Bucket diferente por ambiente (ex.: `finance-control-receipts-dev|hml|prd`). |
+
+Idealmente:
+- Mantenha três arquivos de configuração:
+  - `config/local_credentials.yaml` (dev)
+  - `config/homolog.yaml`
+  - `config/production.yaml`
+- Em produção e homolog, esses arquivos devem ser gerados dinamicamente a partir de secrets; evite commitar.
+
+### 6. Deploy automatizado sugerido
+
+1. Esteira CI (GitHub Actions/GitLab):
+   - Rodar `go test ./...`, `npm run build`, `npm audit`.
+   - Construir imagem Docker (`finance-api`) e enviar ao ECR.
+   - Empacotar frontend e publicar no S3/CloudFront.
+   - Build e deploy da lambda (via `aws lambda update-function-code`).
+
+2. Configurar jobs separados para homolog e produção com aprovação manual.
+
+3. Garantir que `CONFIG_FILE` e variáveis sensíveis sejam injetadas via Secrets Manager.
 
 ### API overview
 

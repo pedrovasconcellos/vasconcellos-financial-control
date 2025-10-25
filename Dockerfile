@@ -1,25 +1,31 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1.7
 
-FROM golang:1.21 AS builder
-WORKDIR /app
+FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ENV CGO_ENABLED=0 \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH}
 
-COPY go.work go.work
-COPY src/api/go.mod src/api/go.sum ./src/api/
-COPY src/lambdas/transaction_processor/go.mod src/lambdas/transaction_processor/go.mod
+WORKDIR /workspace
 
+# Instala dependências do módulo principal
+COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    cd src/api && go mod download
+    go mod download
 
+# Copia todo o código
 COPY . .
 
+# Compila o binário com strip de símbolos para reduzir tamanho
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    cd src/api && go build -o /app/bin/api ./cmd/api
+    go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./src/api/cmd/api
 
-FROM gcr.io/distroless/base-debian12
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/base-debian12
 WORKDIR /app
-COPY --from=builder /app/bin/api /app/api
+COPY --from=builder /workspace/bin/api /app/api
 COPY config /app/config
 
 ENV CONFIG_FILE=/app/config/local_credentials.yaml
