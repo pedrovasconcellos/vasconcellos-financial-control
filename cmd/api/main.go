@@ -123,6 +123,8 @@ func main() {
 		AuthMiddleware:     authMiddleware,
 		AllowedOrigins:     cfg.Security.AllowedOrigins,
 		Logger:             logr,
+		ForceHTTPS:         cfg.App.HTTPS.Redirect,
+		Environment:        cfg.App.Environment,
 	})
 
 	server := &http.Server{
@@ -136,8 +138,20 @@ func main() {
 
 	go func() {
 		logr.Info("server started", zap.String("addr", server.Addr))
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logr.Fatal("server failure", zap.Error(err))
+
+		if cfg.App.HTTPS.Enabled && cfg.App.HTTPS.CertFile != "" && cfg.App.HTTPS.KeyFile != "" {
+			// Usar HTTPS com certificados
+			logr.Info("starting HTTPS server",
+				zap.String("certFile", cfg.App.HTTPS.CertFile),
+				zap.String("keyFile", cfg.App.HTTPS.KeyFile))
+			if err := server.ListenAndServeTLS(cfg.App.HTTPS.CertFile, cfg.App.HTTPS.KeyFile); err != nil && err != http.ErrServerClosed {
+				logr.Fatal("HTTPS server failure", zap.Error(err))
+			}
+		} else {
+			// Usar HTTP
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logr.Fatal("HTTP server failure", zap.Error(err))
+			}
 		}
 	}()
 

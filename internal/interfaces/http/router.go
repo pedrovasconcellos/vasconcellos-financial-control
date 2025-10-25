@@ -23,11 +23,19 @@ type RouterParams struct {
 	AuthMiddleware     *middleware.AuthMiddleware
 	AllowedOrigins     []string
 	Logger             *zap.Logger
+	ForceHTTPS         bool
+	Environment        string
 }
 
 func NewRouter(params RouterParams) *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+
+	// Middleware de redirecionamento HTTPS (deve ser aplicado primeiro)
+	if params.ForceHTTPS {
+		engine.Use(middleware.NewHTTPSRedirectMiddleware(true, params.Environment).Handle())
+	}
+
 	if params.Logger != nil {
 		engine.Use(middleware.NewRequestLoggerMiddleware(params.Logger).Handle())
 	}

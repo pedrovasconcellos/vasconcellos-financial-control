@@ -14,6 +14,14 @@ type AppConfig struct {
 	Environment string
 	Version     string
 	Port        int
+	HTTPS       HTTPSConfig
+}
+
+type HTTPSConfig struct {
+	Enabled  bool
+	CertFile string
+	KeyFile  string
+	Redirect bool
 }
 
 type MongoConfig struct {
@@ -55,8 +63,8 @@ type AuthConfig struct {
 }
 
 type SecurityConfig struct {
-    AllowedOrigins []string
-    EncryptionKey  string
+	AllowedOrigins []string
+	EncryptionKey  string
 }
 
 type StorageConfig struct {
@@ -133,6 +141,12 @@ func LoadConfig() (*Config, error) {
 				Environment: viper.GetString("app.environment"),
 				Version:     viper.GetString("app.version"),
 				Port:        viper.GetInt("app.port"),
+				HTTPS: HTTPSConfig{
+					Enabled:  viper.GetBool("app.https.enabled"),
+					CertFile: viper.GetString("app.https.certFile"),
+					KeyFile:  viper.GetString("app.https.keyFile"),
+					Redirect: viper.GetBool("app.https.redirect"),
+				},
 			},
 			Mongo: MongoConfig{
 				URI:      viper.GetString("mongo.uri"),
@@ -163,10 +177,10 @@ func LoadConfig() (*Config, error) {
 			Auth: AuthConfig{
 				Mode: viper.GetString("auth.mode"),
 			},
-            Security: SecurityConfig{
-                AllowedOrigins: viper.GetStringSlice("security.allowedOrigins"),
-                EncryptionKey:  viper.GetString("security.encryptionKey"),
-            },
+			Security: SecurityConfig{
+				AllowedOrigins: viper.GetStringSlice("security.allowedOrigins"),
+				EncryptionKey:  viper.GetString("security.encryptionKey"),
+			},
 			Queue: QueueConfig{
 				TransactionQueue: viper.GetString("queue.transactionQueue"),
 			},
@@ -193,6 +207,10 @@ func setDefaults() {
 	viper.SetDefault("app.version", "0.1.0")
 	viper.SetDefault("app.environment", "development")
 	viper.SetDefault("app.port", 8080)
+	viper.SetDefault("app.https.enabled", false)
+	viper.SetDefault("app.https.certFile", "")
+	viper.SetDefault("app.https.keyFile", "")
+	viper.SetDefault("app.https.redirect", true)
 
 	viper.SetDefault("mongo.uri", "mongodb://mongo:27017")
 	viper.SetDefault("mongo.database", "finance-control")
