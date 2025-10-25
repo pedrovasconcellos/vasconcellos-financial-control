@@ -146,6 +146,41 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    - Faça upload do conteúdo de `frontend/dist` para um bucket S3 público (com CloudFront) ou sirva via container Nginx.
    - Configure `VITE_API_URL` (ou `REACT_APP_API_URL`) apontando para o endpoint da API em homolog (ex.: `https://api-hml.suaempresa.com/api/v1`).
 
+### 3.1 Provisionamento automatizado com Terraform
+
+Uma stack Terraform está disponível em `infra/terraform` para criar todos os recursos AWS (ECR, ECS Fargate, ALB, S3, SQS, Cognito e instância EC2 com MongoDB). Os passos resumidos são:
+
+1. Entre no diretório `infra/terraform` e copie o arquivo de variáveis:
+   ```bash
+   cd infra/terraform
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+   Ajuste `environment`, `container_image` e demais variáveis conforme o alvo (homolog ou produção).
+
+2. Construa e publique a imagem multi-arquitetura no ECR indicado:
+   ```bash
+   docker buildx build --platform linux/amd64,linux/arm64 -t finance-api:latest ../../
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+   docker tag finance-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
+   docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
+   ```
+
+3. Execute:
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+4. Após o apply, os outputs `alb_dns_name`, `cognito_user_pool_id` e `mongo_private_ip` serão exibidos. Utilize-os para configurar o frontend e para troubleshooting. O recurso `aws_budgets_budget` já fica configurado com limite padrão de USD 100/mês (ajustável via `monthly_cost_limit`).
+
+> **Custos estimados:**
+> - ECS Fargate (0.25 vCPU / 0.5 GB) ~ USD 15/mês.
+> - ALB ~ USD 18/mês.
+> - EC2 t4g.micro (MongoDB) + EBS 20 GB ~ USD 12/mês.
+> - Serviços auxiliares (S3, SQS, Cognito) cobrados sob demanda (estimativa < USD 10/mês para workloads moderados).
+> - Total aproximado: ~ USD 55/mês, mantendo folga em relação ao budget de USD 100.
+
 ### 4. Configuração do ambiente **production** (AWS)
 
 Mesma topologia de homolog, com os seguintes cuidados adicionais:

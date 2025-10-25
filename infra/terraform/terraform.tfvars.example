@@ -1,0 +1,13 @@
+project       = "finance-control"
+environment   = "homolog"
+region        = "us-east-1"
+container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest"
+desired_count = 1
+fargate_cpu   = "256"
+fargate_memory = "512"
+cpu_architecture = "X86_64"
+mongo_instance_type = "t4g.micro"
+monthly_cost_limit = "100"
+extra_tags = {
+  Owner = "time-finance"
+}

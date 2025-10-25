@@ -11,3 +11,7 @@ vendor/
 .env.*
 config/local_credentials.yaml
 docker-compose.override.yml
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
