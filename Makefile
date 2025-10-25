@@ -1,4 +1,6 @@
-.PHONY: api-build api-test lambda-build frontend-build docker-up docker-down lint
+.PHONY: api-build api-test lambda-build frontend-build docker-up docker-down docker-build docker-logs lint fmt
+
+COMPOSE ?= docker compose
 
 api-build:
 	go build ./cmd/api
@@ -10,10 +12,19 @@ lambda-build:
 	cd cmd/lambdas/transaction_processor && GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor
 
 frontend-build:
-	cd frontend && npm install && npm run build
+	cd frontend && npm ci && npm run build
 
 docker-up:
-	docker-compose up --build
+	$(COMPOSE) up --build --remove-orphans
 
 docker-down:
-	docker-compose down --remove-orphans
+	$(COMPOSE) down --remove-orphans
+
+docker-build:
+	$(COMPOSE) build
+
+docker-logs:
+	$(COMPOSE) logs -f api frontend localstack mongo
+
+fmt:
+	gofmt -w ./cmd ./internal

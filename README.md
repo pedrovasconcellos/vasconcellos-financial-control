@@ -58,11 +58,11 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
 
 2. Suba os serviços de apoio com Docker Compose:
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
    Componentes levantados:
    - **API** (Go) em `http://localhost:8080`
-   - **Frontend** (Vite) em `http://localhost:5173`
+   - **Frontend** (build estático servido por Nginx) em `http://localhost:5173`
    - **MongoDB** containerizado (`mongodb://localhost:27017`)
    - **LocalStack** com S3, SQS e Cognito simulados (script `scripts/localstack/00-bootstrap.sh` cria bucket/fila/pool automaticamente)
 
@@ -70,10 +70,10 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    ```bash
    # Backend API
    export CONFIG_FILE=config/local_credentials.yaml
-  go run ./cmd/api
+   go run ./cmd/api
 
    # Lambda (build para testes locais)
-  GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./cmd/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./cmd/lambdas/transaction_processor
 
    # Frontend (com hot reload)
    cd frontend

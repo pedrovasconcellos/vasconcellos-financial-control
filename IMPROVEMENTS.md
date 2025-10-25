@@ -5,7 +5,7 @@ Documento elaborado para orientar evolução contínua do projeto.
 ## Toolchain e Builds
 
 - **Node.js**: atualizar ambiente para **>= 20.19** (CI e máquinas locais). O build atual funciona com warning, mas futuras versões do Vite podem falhar. Registrar em documentação e pipelines.
-- **Docker Compose**: avaliar inclusão de `depends_on` com `condition: service_healthy` e healthchecks (MongoDB, LocalStack) para evitar corridas de inicialização durante o `docker-compose up`.
+- **Docker Compose**: avaliar inclusão de `depends_on` com `condition: service_healthy` e healthchecks (MongoDB, LocalStack) para evitar corridas de inicialização durante o `docker compose up`.
 - **Imagem de produção**: considerar estágio final `scratch` ou `distroless/static` após auditar dependências, reduzindo superfície de ataque. Avaliar uso de `nonroot` para execução.
 
 ## Segurança e Configuração

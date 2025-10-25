@@ -9,21 +9,19 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /workspace
 
-# Instala dependências do módulo principal
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
 
-# Copia todo o código
-COPY . .
+COPY internal ./internal
+COPY cmd ./cmd
 
-# Compila o binário com strip de símbolos para reduzir tamanho
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./cmd/api
 
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/base-debian12
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/base-debian12 AS runtime
 WORKDIR /app
 COPY --from=builder /workspace/bin/api /app/api
 COPY config /app/config
