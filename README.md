@@ -61,7 +61,7 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    docker compose up --build
    ```
    Componentes levantados:
-   - **API** (Go) em `http://localhost:8080`
+   - **API** (Go) em `http://localhost:8080` (`/api/v1/health` responde o health-check)
    - **Frontend** (build estático servido por Nginx) em `http://localhost:5173`
    - **MongoDB** containerizado (`mongodb://localhost:27017`)
    - **LocalStack** com S3, SQS e Cognito simulados (script `scripts/localstack/00-bootstrap.sh` cria bucket/fila/pool automaticamente)

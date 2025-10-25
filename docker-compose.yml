@@ -1,3 +1,4 @@
+name: financial-control
 version: "3.9"
 
 services:
@@ -22,6 +23,11 @@ services:
       - ./config/local_credentials.yaml:/app/config/local_credentials.yaml:ro
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   mongo:
     image: mongo:6.0

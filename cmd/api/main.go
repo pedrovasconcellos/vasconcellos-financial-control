@@ -108,6 +108,7 @@ func main() {
 	budgetHandler := handler.NewBudgetHandler(budgetUseCase)
 	goalHandler := handler.NewGoalHandler(goalUseCase)
 	reportHandler := handler.NewReportHandler(reportUseCase)
+	healthHandler := handler.NewHealthHandler()
 
 	authMiddleware := middleware.NewAuthMiddleware(authUseCase, userUseCase)
 	router := interfacesHTTP.NewRouter(interfacesHTTP.RouterParams{
@@ -118,6 +119,7 @@ func main() {
 		BudgetHandler:      budgetHandler,
 		GoalHandler:        goalHandler,
 		ReportHandler:      reportHandler,
+		HealthHandler:      healthHandler,
 		AuthMiddleware:     authMiddleware,
 		AllowedOrigins:     cfg.Security.AllowedOrigins,
 		Logger:             logr,

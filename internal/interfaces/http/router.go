@@ -19,6 +19,7 @@ type RouterParams struct {
 	BudgetHandler      *handler.BudgetHandler
 	GoalHandler        *handler.GoalHandler
 	ReportHandler      *handler.ReportHandler
+	HealthHandler      *handler.HealthHandler
 	AuthMiddleware     *middleware.AuthMiddleware
 	AllowedOrigins     []string
 	Logger             *zap.Logger
@@ -43,6 +44,9 @@ func NewRouter(params RouterParams) *gin.Engine {
 	{
 		v1 := api.Group("/v1")
 		{
+			if params.HealthHandler != nil {
+				v1.GET("/health", params.HealthHandler.Status)
+			}
 			v1.POST("/auth/login", params.AuthHandler.Login)
 
 			protected := v1.Group("/")
