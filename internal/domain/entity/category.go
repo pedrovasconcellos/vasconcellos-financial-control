@@ -10,7 +10,7 @@ const (
 )
 
 type Category struct {
-	ID          string       `bson:"_id,omitempty"`
+	ID          string       `bson:"_id"`
 	UserID      string       `bson:"user_id"`
 	Name        string       `bson:"name"`
 	Type        CategoryType `bson:"type"`

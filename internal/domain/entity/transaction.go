@@ -11,7 +11,7 @@ const (
 )
 
 type Transaction struct {
-	ID            string            `bson:"_id,omitempty"`
+	ID            string            `bson:"_id"`
 	UserID        string            `bson:"user_id"`
 	AccountID     string            `bson:"account_id"`
 	CategoryID    string            `bson:"category_id"`
