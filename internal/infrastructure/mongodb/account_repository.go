@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -110,17 +111,35 @@ func (r *AccountRepository) List(ctx context.Context, userID string) ([]*entity.
 }
 
 func (r *AccountRepository) AdjustBalance(ctx context.Context, id string, userID string, amount float64) error {
-	result, err := r.collection.UpdateOne(ctx, bson.M{
+	var result *mongo.UpdateResult
+	var err error
+
+	// Primeiro tenta com o ID como string
+	result, err = r.collection.UpdateOne(ctx, bson.M{
 		"_id":     id,
 		"user_id": userID,
 	}, bson.M{
 		"$inc": bson.M{"balance": amount},
 		"$set": bson.M{"updated_at": time.Now().UTC()},
 	})
+
+	// Se não encontrar, tenta converter para ObjectId
+	if err == nil && result != nil && result.MatchedCount == 0 {
+		if objID, parseErr := primitive.ObjectIDFromHex(id); parseErr == nil {
+			result, err = r.collection.UpdateOne(ctx, bson.M{
+				"_id":     objID,
+				"user_id": userID,
+			}, bson.M{
+				"$inc": bson.M{"balance": amount},
+				"$set": bson.M{"updated_at": time.Now().UTC()},
+			})
+		}
+	}
+
 	if err != nil {
 		return err
 	}
-	if result.MatchedCount == 0 {
+	if result != nil && result.MatchedCount == 0 {
 		return domainErrors.ErrNotFound
 	}
 	return nil

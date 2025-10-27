@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/vasconcellos/finance-control/internal/domain/entity"
@@ -64,13 +65,26 @@ func (r *CategoryRepository) Delete(ctx context.Context, id string, userID strin
 
 func (r *CategoryRepository) GetByID(ctx context.Context, id string, userID string) (*entity.Category, error) {
 	var category entity.Category
+
+	// Primeiro tenta com o ID como string
 	err := r.collection.FindOne(ctx, bson.M{
 		"_id":     id,
 		"user_id": userID,
 	}).Decode(&category)
+
+	// Se não encontrar, tenta converter para ObjectId
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, nil
+		if objID, parseErr := primitive.ObjectIDFromHex(id); parseErr == nil {
+			err = r.collection.FindOne(ctx, bson.M{
+				"_id":     objID,
+				"user_id": userID,
+			}).Decode(&category)
+		}
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
 	}
+
 	if err != nil {
 		return nil, err
 	}

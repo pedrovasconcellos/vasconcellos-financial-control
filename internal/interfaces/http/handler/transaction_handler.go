@@ -37,10 +37,22 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	log.Info("recording transaction", zap.String("user_id", user.ID), zap.String("account_id", request.AccountID), zap.String("category_id", request.CategoryID))
+	log.Info("recording transaction",
+		zap.String("user_id", user.ID),
+		zap.String("account_id", request.AccountID),
+		zap.String("category_id", request.CategoryID),
+		zap.Float64("amount", request.Amount),
+		zap.String("currency", request.Currency))
+
 	response, err := h.transactionUseCase.RecordTransaction(c.Request.Context(), user.ID, request)
 	if err != nil {
-		log.Error("failed to record transaction", zap.Error(err))
+		log.Error("failed to record transaction",
+			zap.Error(err),
+			zap.String("account_id", request.AccountID),
+			zap.String("category_id", request.CategoryID),
+			zap.Float64("amount", request.Amount),
+			zap.String("user_id", user.ID))
+
 		respondError(c, err)
 		return
 	}
