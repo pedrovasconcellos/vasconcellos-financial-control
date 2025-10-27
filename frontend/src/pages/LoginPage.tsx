@@ -45,10 +45,10 @@ const LoginPage = () => {
     <Container component="main" maxWidth="xs">
       <Paper elevation={3} sx={{ mt: 12, p: 4 }}>
         <Typography component="h1" variant="h5" align="center" gutterBottom>
-          Finance Control
+          Financial Control
         </Typography>
         <Typography variant="body2" color="text.secondary" align="center" mb={2}>
-          Secure access to your personal finance control panel.
+          Secure access to your personal financial control panel.
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>

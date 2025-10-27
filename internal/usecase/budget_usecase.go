@@ -6,10 +6,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
-	"github.com/vasconcellos/finance-control/internal/domain/errors"
-	"github.com/vasconcellos/finance-control/internal/domain/repository"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
+	"github.com/vasconcellos/financial-control/internal/domain/errors"
+	"github.com/vasconcellos/financial-control/internal/domain/repository"
 )
 
 type BudgetUseCase struct {

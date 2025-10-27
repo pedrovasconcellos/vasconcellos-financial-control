@@ -1,4 +1,4 @@
-module github.com/vasconcellos/finance-control
+module github.com/vasconcellos/financial-control
 
 go 1.24.2
 

@@ -1,5 +1,5 @@
 // Script para criar transações recentes (últimos 30 dias)
-db = db.getSiblingDB('finance-control');
+db = db.getSiblingDB('financial-control');
 
 const user = db.users.findOne({email: "vasconcellos@gmail.com"});
 const vasconcellosUserId = user._id;

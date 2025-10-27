@@ -22,7 +22,7 @@ app:
   port: 9000
 mongo:
   uri: mongodb://localhost:27017
-  database: finance
+  database: financial
 `), 0o600); err != nil {
 		t.Fatalf("falha ao criar arquivo temporário: %v", err)
 	}
@@ -40,8 +40,8 @@ mongo:
 	if cfg.App.Port != 9000 {
 		t.Errorf("esperado app.port 9000, obtido %d", cfg.App.Port)
 	}
-	if cfg.Mongo.Database != "finance" {
-		t.Errorf("esperado mongo.database 'finance', obtido '%s'", cfg.Mongo.Database)
+	if cfg.Mongo.Database != "financial" {
+		t.Errorf("esperado mongo.database 'financial', obtido '%s'", cfg.Mongo.Database)
 	}
 }
 

@@ -203,7 +203,7 @@ func LoadConfig() (*Config, error) {
 }
 
 func setDefaults() {
-	viper.SetDefault("app.name", "finance-control-api")
+	viper.SetDefault("app.name", "financial-control-api")
 	viper.SetDefault("app.version", "0.1.0")
 	viper.SetDefault("app.environment", "development")
 	viper.SetDefault("app.port", 8080)
@@ -213,22 +213,22 @@ func setDefaults() {
 	viper.SetDefault("app.https.redirect", true)
 
 	viper.SetDefault("mongo.uri", "mongodb://mongo:27017")
-	viper.SetDefault("mongo.database", "finance-control")
+	viper.SetDefault("mongo.database", "financial-control")
 
 	viper.SetDefault("aws.region", "us-east-1")
 	viper.SetDefault("aws.useLocalstack", true)
 	viper.SetDefault("aws.endpoint", "http://localstack:4566")
 	viper.SetDefault("aws.credentialsSource", "env")
-	viper.SetDefault("aws.s3.bucket", "finance-control-receipts")
-	viper.SetDefault("aws.sqs.queueName", "finance-transactions-queue")
+	viper.SetDefault("aws.s3.bucket", "financial-control-receipts")
+	viper.SetDefault("aws.sqs.queueName", "financial-transactions-queue")
 	viper.SetDefault("aws.cognito.region", "us-east-1")
 	viper.SetDefault("aws.cognito.domain", "http://localhost:4566")
 
 	viper.SetDefault("auth.mode", "cognito")
 
 	viper.SetDefault("security.allowedOrigins", []string{"*"})
-	viper.SetDefault("queue.transactionQueue", "finance-transactions-queue")
-	viper.SetDefault("storage.receiptBucket", "finance-control-receipts")
+	viper.SetDefault("queue.transactionQueue", "financial-transactions-queue")
+	viper.SetDefault("storage.receiptBucket", "financial-control-receipts")
 	viper.SetDefault("local.credentialsFile", "config/local_credentials.yaml")
 }
 

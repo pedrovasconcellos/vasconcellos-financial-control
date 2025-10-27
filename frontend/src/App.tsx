@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { useAuth } from './hooks/useAuth';
@@ -15,7 +15,8 @@ const App = () => {
   const { isAuthenticated, tokens, logout } = useAuth();
 
   useEffect(() => {
-    setAuthToken(tokens?.accessToken ?? null);
+    const token = tokens?.accessToken ?? null;
+    setAuthToken(token);
   }, [tokens]);
 
   if (!isAuthenticated) {

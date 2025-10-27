@@ -1,6 +1,6 @@
 # Agent Guidelines
 
-This repository hosts a full-stack personal finance platform. When interacting with it:
+This repository hosts a full-stack personal financial platform. When interacting with it:
 
 - **Architecture:** The Go backend follows clean architecture. Domain types, repositories, and use cases live under `internal/`. Adapters (HTTP handlers, MongoDB repositories, AWS clients) must remain thin and respect dependency direction (outer layers depend on inner ones only).
 - **Entrypoints:**

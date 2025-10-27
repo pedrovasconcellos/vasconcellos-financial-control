@@ -380,7 +380,7 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 locals {
   container_env = [
     { name = "APP_ENVIRONMENT", value = var.environment },
-    { name = "MONGO_URI", value = "mongodb://${aws_instance.mongo.private_ip}:27017/finance-control" },
+    { name = "MONGO_URI", value = "mongodb://${aws_instance.mongo.private_ip}:27017/financial-control" },
     { name = "AWS_REGION", value = var.region },
     { name = "AWS_S3_BUCKET", value = aws_s3_bucket.receipts.bucket },
     { name = "AWS_SQS_QUEUENAME", value = aws_sqs_queue.transactions.name },

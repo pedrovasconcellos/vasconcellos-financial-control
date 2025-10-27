@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/interfaces/http/middleware"
-	"github.com/vasconcellos/finance-control/internal/usecase"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
+	"github.com/vasconcellos/financial-control/internal/usecase"
 )
 
 type TransactionHandler struct {

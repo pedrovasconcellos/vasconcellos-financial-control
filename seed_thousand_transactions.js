@@ -1,5 +1,5 @@
 // Script para criar 1.000 transações para o Vasconcellos
-db = db.getSiblingDB('finance-control');
+db = db.getSiblingDB('financial-control');
 
 // Buscar dados do Vasconcellos
 const user = db.users.findOne({email: "vasconcellos@gmail.com"});

@@ -24,7 +24,7 @@ Este conjunto de módulos cria a infraestrutura mínima para hospedar a API no E
    Edite `main.tf` ou configure no CLI:
    ```bash
    terraform init -backend-config="bucket=<bucket-state>" \
-                  -backend-config="key=finance-control/terraform.tfstate" \
+                  -backend-config="key=financial-control/terraform.tfstate" \
                   -backend-config="region=us-east-1"
    ```
 
@@ -39,11 +39,11 @@ Este conjunto de módulos cria a infraestrutura mínima para hospedar a API no E
 
 3. **Construir e publicar a imagem**
    ```bash
-   docker buildx build --platform linux/amd64,linux/arm64 -t finance-api:latest .
+   docker buildx build --platform linux/amd64,linux/arm64 -t financial-api:latest .
    aws ecr get-login-password --region us-east-1 | docker login \
        --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
-   docker tag finance-api:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
-   docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
+   docker tag financial-api:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest
+   docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest
    ```
 
 4. **Aplicar a infraestrutura**

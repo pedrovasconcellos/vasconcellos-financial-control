@@ -1,5 +1,5 @@
 // Script para inserir massa de dados no MongoDB
-db = db.getSiblingDB('finance-control');
+db = db.getSiblingDB('financial-control');
 
 const vasconcellosUserId = "local-vasconcellos-user";
 

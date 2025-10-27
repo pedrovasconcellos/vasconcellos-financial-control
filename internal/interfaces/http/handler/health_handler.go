@@ -32,9 +32,9 @@ func (h *HealthHandler) Status(c *gin.Context) {
 
 	response := HealthResponse{
 		Status:    "healthy",
-		Message:   "Finance Control API is running successfully",
+		Message:   "Financial Control API is running successfully",
 		Timestamp: time.Now().Format(time.RFC3339),
-		Service:   "finance-control-api",
+		Service:   "financial-control-api",
 		Version:   "1.0.0",
 		Uptime:    uptime.Round(time.Second).String(),
 		Checks: map[string]string{

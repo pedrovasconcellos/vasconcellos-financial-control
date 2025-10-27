@@ -1,7 +1,7 @@
 variable "project" {
   description = "Nome base do projeto"
   type        = string
-  default     = "finance-control"
+  default     = "financial-control"
 }
 
 variable "environment" {

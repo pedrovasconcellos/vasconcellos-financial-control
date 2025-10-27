@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/vasconcellos/finance-control/internal/usecase"
+	"github.com/vasconcellos/financial-control/internal/usecase"
 )
 
 type AuthMiddleware struct {
