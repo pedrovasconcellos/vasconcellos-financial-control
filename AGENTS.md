@@ -1,5 +1,11 @@
 # Agent Guidelines
 
+## Purpose
+
+This file (`AGENTS.md`) provides essential guidelines and context for AI agents working with this codebase. It serves as the primary reference for understanding the project architecture, conventions, and development practices. Always refer to this file when making changes or additions to ensure consistency with the project's standards.
+
+## Repository Overview
+
 This repository hosts a full-stack personal financial platform. When interacting with it:
 
 - **Architecture:** The Go backend follows clean architecture. Domain types, repositories, and use cases live under `internal/`. Adapters (HTTP handlers, MongoDB repositories, AWS clients) must remain thin and respect dependency direction (outer layers depend on inner ones only).
@@ -17,6 +23,6 @@ This repository hosts a full-stack personal financial platform. When interacting
   - Go code must be formatted with `gofmt` and keep comments (when necessary) in Portuguese, while code remains in English.
   - React components use functional style, Material UI theming, and React Query for data fetching.
   - Prefer dependency injection via constructors and keep global state isolated to the `providers/` layer on the frontend.
-- **Documentation:** It is important to keep `README.md` updated with important project information. Whenever documenting the project in `README.md` (English), automatically copy and translate all content to `README-PTBR.md` (Portuguese), maintaining the same structure and formatting. Document architectural or configuration changes in `PROJECT.md`. For known issues and improvements, check `BUGS_AND_LIMITATIONS.md` and `IMPROVEMENTS.md`.
+- **Documentation:** It is important to keep `README.md` updated with important project information. Whenever documenting the project in `README.md` (English), automatically copy and translate all content to `README_PTBR.md` (Portuguese), maintaining the same structure and formatting. Document architectural or configuration changes in `PROJECT.md`. For known issues and improvements, check `BUGS_AND_LIMITATIONS.md` and `IMPROVEMENTS.md`. **All Terraform infrastructure changes must be documented in `infra/terraform/README_INFRA.md`**.
 
 Before shipping changes, **always run unit tests** after any code changes using `go test ./...`, build the lambda (`make lambda-build`), and `npm run build` to ensure the UI type-checks.

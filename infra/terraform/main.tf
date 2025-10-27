@@ -1,3 +1,6 @@
+# Provisionamento AWS com App Runner + DocumentDB Serverless
+# Custo estimado: ~USD 60/mês
+
 terraform {
   required_version = ">= 1.6.0"
   required_providers {
@@ -25,8 +28,7 @@ locals {
   }, var.extra_tags)
 }
 
-# --- Networking helpers ---
-
+# --- VPC para DocumentDB Serverless ---
 data "aws_vpc" "default" {
   default = true
 }
@@ -38,169 +40,18 @@ data "aws_subnets" "default" {
   }
 }
 
-# --- Budgets guardrail ---
-resource "aws_budgets_budget" "monthly_cap" {
-  name                = "${local.name_prefix}-cost-cap"
-  budget_type         = "COST"
-  limit_amount        = var.monthly_cost_limit
-  limit_unit          = "USD"
-  time_unit           = "MONTHLY"
-  cost_types {
-    include_credit = true
-  }
-  time_period {
-    start = "2024-01-01_00:00"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-# --- ECR repository ---
-resource "aws_ecr_repository" "api" {
-  name                 = "${local.name_prefix}-api"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-  tags = local.tags
-}
-
-# --- S3 bucket para recibos ---
-resource "random_id" "bucket" {
-  byte_length = 4
-}
-
-resource "aws_s3_bucket" "receipts" {
-  bucket = "${local.name_prefix}-receipts-${random_id.bucket.hex}"
-  tags   = local.tags
-}
-
-resource "aws_s3_bucket_public_access_block" "receipts" {
-  bucket = aws_s3_bucket.receipts.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "receipts" {
-  bucket = aws_s3_bucket.receipts.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-# --- SQS queue + DLQ ---
-resource "aws_sqs_queue" "dlq" {
-  name                       = "${local.name_prefix}-transactions-dlq"
-  message_retention_seconds  = 1209600
-  visibility_timeout_seconds = 30
-  tags                       = local.tags
-}
-
-resource "aws_sqs_queue" "transactions" {
-  name                       = "${local.name_prefix}-transactions"
-  visibility_timeout_seconds = 60
-  message_retention_seconds  = 1209600
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.dlq.arn,
-    maxReceiveCount      = 5
-  })
-  tags = local.tags
-}
-
-# --- Cognito ---
-resource "aws_cognito_user_pool" "this" {
-  name = "${local.name_prefix}-users"
-  auto_verified_attributes = ["email"]
-  password_policy {
-    minimum_length    = 8
-    require_lowercase = true
-    require_numbers   = true
-    require_symbols   = false
-    require_uppercase = true
-  }
-  tags = local.tags
-}
-
-resource "aws_cognito_user_pool_client" "this" {
-  name                   = "${local.name_prefix}-client"
-  user_pool_id           = aws_cognito_user_pool.this.id
-  generate_secret        = false
-  explicit_auth_flows    = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
-  prevent_user_existence_errors = "ENABLED"
-}
-
-# --- MongoDB EC2 (instância econômica) ---
-resource "aws_security_group" "mongo" {
-  name        = "${local.name_prefix}-mongo-sg"
-  description = "MongoDB access"
+# --- Security Group para DocumentDB ---
+resource "aws_security_group" "docdb" {
+  name        = "${local.name_prefix}-docdb-sg"
+  description = "DocumentDB Serverless access"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    from_port       = 27017
-    to_port         = 27017
-    protocol        = "tcp"
-    security_groups = [aws_security_group.service.id]
-    description     = "ECS tasks"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = local.tags
-}
-
-data "aws_ssm_parameter" "mongo_ami" {
-  name = var.mongo_ami_ssm_parameter
-}
-
-resource "aws_instance" "mongo" {
-  ami                         = data.aws_ssm_parameter.mongo_ami.value
-  instance_type               = var.mongo_instance_type
-  subnet_id                   = element(data.aws_subnets.default.ids, 0)
-  vpc_security_group_ids      = [aws_security_group.mongo.id]
-  associate_public_ip_address = true
-  iam_instance_profile        = null
-
-  user_data = <<-EOT
-              #!/bin/bash
-              set -xe
-              dnf install -y docker
-              systemctl enable docker
-              systemctl start docker
-              docker run -d --restart unless-stopped -p 27017:27017 --name mongo mongo:6
-              EOT
-
-  root_block_device {
-    volume_size = 20
-    volume_type = "gp3"
-  }
-
-  tags = merge(local.tags, { "Name" = "${local.name_prefix}-mongo" })
-}
-
-# --- Security groups para ALB e serviço ---
-resource "aws_security_group" "alb" {
-  name        = "${local.name_prefix}-alb-sg"
-  description = "Allow HTTP"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 27017
+    to_port     = 27017
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "MongoDB from App Runner"
   }
 
   egress {
@@ -213,254 +64,224 @@ resource "aws_security_group" "alb" {
   tags = local.tags
 }
 
-resource "aws_security_group" "service" {
-  name        = "${local.name_prefix}-svc-sg"
-  description = "Allow traffic from ALB"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    description     = "From ALB"
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+# --- DocumentDB Serverless Cluster ---
+# Usando STANDARD mode (mais barato: USD 0.0822/DCU-hora)
+resource "aws_docdb_cluster" "mongo" {
+  cluster_identifier      = "${local.name_prefix}-docdb"
+  engine                  = "docdb"
+  engine_version          = "5.0.0"
+  master_username         = var.docdb_master_username
+  master_password         = random_password.docdb_password.result
+  db_subnet_group_name    = aws_docdb_subnet_group.this.name
+  vpc_security_group_ids  = [aws_security_group.docdb.id]
+  
+  # Serverless configuration - STANDARD (mais barato)
+  # Cada DCU = ~2GB RAM + CPU + rede
+  serverlessv2_scaling_configuration {
+    max_capacity = 16.0    # 16 DCUs máximo (~32GB RAM)
+    min_capacity = 2.0     # 2 DCUs mínimo (~4GB RAM, evita cold start)
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
+  skip_final_snapshot = true
+  
   tags = local.tags
 }
 
-# --- Load balancer ---
-resource "aws_lb" "api" {
-  name               = "${local.name_prefix}-alb"
-  load_balancer_type = "application"
-  internal           = false
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = data.aws_subnets.default.ids
-  tags               = local.tags
+# Optional: Use I/O-Optimized mode (10% mais caro mas melhor para I/O intensivo)
+# Custo: USD 0.0905/DCU-hora vs USD 0.0822/DCU-hora no Standard
+
+resource "aws_docdb_cluster_instance" "mongo" {
+  identifier         = "${local.name_prefix}-docdb-instance"
+  cluster_identifier = aws_docdb_cluster.mongo.id
+  instance_class     = "db.serverless"
 }
 
-resource "aws_lb_target_group" "api" {
-  name        = "${local.name_prefix}-tg"
-  port        = 8080
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = data.aws_vpc.default.id
-
-  health_check {
-    path                = "/api/v1/accounts"
-    matcher             = "200-499"
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 5
-    interval            = 30
-  }
-
+resource "aws_docdb_subnet_group" "this" {
+  name       = "${local.name_prefix}-docdb-subnet"
+  subnet_ids = data.aws_subnets.default.ids
+  
   tags = local.tags
 }
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.api.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
-  }
+# --- Password para DocumentDB ---
+resource "random_password" "docdb_password" {
+  length  = 32
+  special = true
 }
 
-# --- CloudWatch Logs ---
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/ecs/${local.name_prefix}-api"
-  retention_in_days = 30
-  tags              = local.tags
-}
+# --- App Runner Service (API) ---
+resource "aws_apprunner_service" "api" {
+  service_name = "${local.name_prefix}-api"
 
-# --- IAM roles ---
-resource "aws_iam_role" "ecs_task_execution" {
-  name               = "${local.name_prefix}-ecs-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
-  tags               = local.tags
-}
-
-data "aws_iam_policy_document" "ecs_task_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
+  source_configuration {
+    auto_deployments_enabled = false
+    
+    image_repository {
+      image_identifier      = var.container_image
+      image_configuration {
+        port = "8080"
+        runtime_environment_variables = {
+          APP_ENVIRONMENT              = var.environment
+          MONGO_URI                    = "mongodb://${aws_docdb_cluster.mongo.master_username}:${random_password.docdb_password.result}@${aws_docdb_cluster.mongo.endpoint}:27017/financial-control?tls=true"
+          AWS_REGION                   = var.region
+          AWS_S3_BUCKET                = aws_s3_bucket.receipts.bucket
+          AWS_SQS_QUEUENAME            = aws_sqs_queue.transactions.name
+          AWS_SQS_QUEUEURL             = aws_sqs_queue.transactions.url
+          QUEUE_TRANSACTIONQUEUE       = aws_sqs_queue.transactions.name
+          STORAGE_RECEIPTBUCKET        = aws_s3_bucket.receipts.bucket
+          AWS_COGNITO_USERPOOLID       = aws_cognito_user_pool.this.id
+          AWS_COGNITO_CLIENTID         = aws_cognito_user_pool_client.this.id
+          AUTH_MODE                    = "cognito"
+        }
+      }
+      image_repository_type = "ECR"
     }
   }
+
+  instance_configuration {
+    cpu               = "0.25 vCPU"
+    memory            = "0.5 GB"
+    instance_role_arn = aws_iam_role.apprunner_instance.arn
+  }
+
+  tags = local.tags
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# --- IAM Roles ---
+resource "aws_iam_role" "apprunner_instance" {
+  name = "${local.name_prefix}-apprunner-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Principal = {
+        Service = "tasks.apprunner.amazonaws.com"
+      }
+      Effect = "Allow"
+    }]
+  })
+
+  tags = local.tags
 }
 
-resource "aws_iam_role" "ecs_task" {
-  name               = "${local.name_prefix}-ecs-task"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
-  tags               = local.tags
-}
-
-resource "aws_iam_role_policy" "ecs_task" {
-  name = "${local.name_prefix}-ecs-task-policy"
-  role = aws_iam_role.ecs_task.id
+resource "aws_iam_role_policy" "apprunner_policy" {
+  name = "${local.name_prefix}-apprunner-policy"
+  role = aws_iam_role.apprunner_instance.id
 
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow",
-        Action   = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Resource = "*"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "${aws_s3_bucket.receipts.arn}/*"
       },
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "sqs:SendMessage",
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes"
-        ],
+        ]
         Resource = [aws_sqs_queue.transactions.arn, aws_sqs_queue.dlq.arn]
       },
       {
-        Effect   = "Allow",
-        Action   = [
-          "s3:PutObject",
-          "s3:GetObject"
-        ],
-        Resource = "${aws_s3_bucket.receipts.arn}/*"
-      },
-      {
-        Effect   = "Allow",
-        Action   = [
-          "cognito-idp:InitiateAuth",
-          "cognito-idp:DescribeUserPool",
-          "cognito-idp:AdminGetUser"
-        ],
-        Resource = aws_cognito_user_pool.this.arn
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
       }
     ]
   })
 }
 
-# --- ECS Cluster ---
-resource "aws_ecs_cluster" "this" {
-  name = "${local.name_prefix}-cluster"
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
+# --- S3 Bucket para Receipts ---
+resource "aws_s3_bucket" "receipts" {
+  bucket = "${local.name_prefix}-receipts"
+  tags   = local.tags
+}
+
+resource "aws_s3_bucket_versioning" "receipts" {
+  bucket = aws_s3_bucket.receipts.id
+  versioning_configuration {
+    status = "Enabled"
   }
+}
+
+# --- SQS Queue com DLQ ---
+resource "aws_sqs_queue" "dlq" {
+  name                      = "${local.name_prefix}-dlq"
+  message_retention_seconds = 1209600 # 14 dias
+  tags                      = local.tags
+}
+
+resource "aws_sqs_queue" "transactions" {
+  name                      = "${local.name_prefix}-transactions"
+  visibility_timeout_seconds = 60
+  message_retention_seconds  = 345600 # 4 dias
+  
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.dlq.arn
+    maxReceiveCount     = 5
+  })
+  
   tags = local.tags
 }
 
-resource "aws_ecs_cluster_capacity_providers" "this" {
-  cluster_name = aws_ecs_cluster.this.name
-  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
-  default_capacity_provider_strategy {
-    capacity_provider = "FARGATE"
-    weight            = 1
+# --- Cognito User Pool ---
+resource "aws_cognito_user_pool" "this" {
+  name     = "${local.name_prefix}-users"
+  tags     = local.tags
+  
+  username_configuration {
+    case_sensitive = false
+  }
+  
+  password_policy {
+    minimum_length    = 8
+    require_lowercase = true
+    require_numbers   = true
+    require_symbols   = true
+    require_uppercase = true
+  }
+  
+  auto_verified_attributes = ["email"]
+  
+  schema {
+    name     = "email"
+    required = true
+    mutable  = true
   }
 }
 
-# --- ECS Task Definition ---
-locals {
-  container_env = [
-    { name = "APP_ENVIRONMENT", value = var.environment },
-    { name = "MONGO_URI", value = "mongodb://${aws_instance.mongo.private_ip}:27017/financial-control" },
-    { name = "AWS_REGION", value = var.region },
-    { name = "AWS_S3_BUCKET", value = aws_s3_bucket.receipts.bucket },
-    { name = "AWS_SQS_QUEUENAME", value = aws_sqs_queue.transactions.name },
-    { name = "AWS_SQS_QUEUEURL", value = aws_sqs_queue.transactions.url },
-    { name = "QUEUE_TRANSACTIONQUEUE", value = aws_sqs_queue.transactions.name },
-    { name = "STORAGE_RECEIPTBUCKET", value = aws_s3_bucket.receipts.bucket },
-    { name = "AWS_COGNITO_USERPOOLID", value = aws_cognito_user_pool.this.id },
-    { name = "AWS_COGNITO_CLIENTID", value = aws_cognito_user_pool_client.this.id },
-    { name = "AUTH_MODE", value = "cognito" }
-  ]
+resource "aws_cognito_user_pool_client" "this" {
+  name         = "${local.name_prefix}-client"
+  user_pool_id = aws_cognito_user_pool.this.id
+  
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_scopes                 = ["email", "openid", "profile"]
+  
+  callback_urls = ["https://example.com/callback"]
+  logout_urls   = ["https://example.com/logout"]
+  
+  generate_secret = true
 }
 
-resource "aws_ecs_task_definition" "api" {
-  family                   = "${local.name_prefix}-api"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.fargate_cpu
-  memory                   = var.fargate_memory
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([
-    {
-      name      = "api"
-      image     = var.container_image
-      essential = true
-      portMappings = [
-        {
-          containerPort = 8080
-          hostPort      = 8080
-          protocol      = "tcp"
-        }
-      ]
-      environment = local.container_env
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.api.name
-          awslogs-region        = var.region
-          awslogs-stream-prefix = "api"
-        }
-      }
-    }
-  ])
-
-  runtime_platform {
-    operating_system_family = "LINUX"
-    cpu_architecture         = var.cpu_architecture
-  }
-
-  tags = local.tags
+# --- CloudWatch Log Group ---
+resource "aws_cloudwatch_log_group" "apprunner" {
+  name              = "/aws/apprunner/${local.name_prefix}-api"
+  retention_in_days = 30
+  tags              = local.tags
 }
 
-# --- ECS Service ---
-resource "aws_ecs_service" "api" {
-  name            = "${local.name_prefix}-svc"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = var.desired_count
-  launch_type     = "FARGATE"
-  platform_version = "1.4.0"
-
-  network_configuration {
-    subnets         = data.aws_subnets.default.ids
-    security_groups = [aws_security_group.service.id]
-    assign_public_ip = true
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
-    container_name   = "api"
-    container_port   = 8080
-  }
-
-  lifecycle {
-    ignore_changes = [desired_count]
-  }
-
-  depends_on = [aws_lb_listener.http]
-
-  tags = local.tags
-}
+# Outputs movidos para outputs.tf
 
