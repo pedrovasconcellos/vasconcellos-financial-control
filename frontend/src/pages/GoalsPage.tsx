@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Grid,
   LinearProgress,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -23,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 
 import { api } from '../services/api';
+import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
 
 interface Goal {
   id: string;
@@ -40,10 +42,16 @@ const GoalsPage = () => {
   const [open, setOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string;
+    targetAmount: number;
+    currency: CurrencyCode;
+    deadline: string;
+    description: string;
+  }>({
     name: '',
     targetAmount: 0,
-    currency: 'USD',
+    currency: defaultCurrency,
     deadline: dayjs().add(6, 'month').format('YYYY-MM-DD'),
     description: ''
   });
@@ -179,11 +187,19 @@ const GoalsPage = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 label="Currency"
+                select
                 value={form.currency}
-                onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, currency: event.target.value as CurrencyCode }))
+                }
                 fullWidth
-                inputProps={{ maxLength: 3 }}
-              />
+              >
+                {currencyOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
               <TextField

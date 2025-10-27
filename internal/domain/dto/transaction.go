@@ -6,7 +6,7 @@ type CreateTransactionRequest struct {
 	AccountID   string    `json:"accountId" binding:"required"`
 	CategoryID  string    `json:"categoryId" binding:"required"`
 	Amount      float64   `json:"amount" binding:"required"`
-	Currency    string    `json:"currency" binding:"required,len=3"`
+	Currency    string    `json:"currency" binding:"required,oneof=USD EUR CHF GBP BRL"`
 	Description string    `json:"description"`
 	OccurredAt  time.Time `json:"occurredAt" binding:"required"`
 	Tags        []string  `json:"tags"`

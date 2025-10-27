@@ -16,7 +16,7 @@ type Transaction struct {
 	AccountID     string            `bson:"account_id"`
 	CategoryID    string            `bson:"category_id"`
 	Amount        float64           `bson:"amount"`
-	Currency      string            `bson:"currency"`
+	Currency      Currency          `bson:"currency"`
 	Description   string            `bson:"description"`
 	OccurredAt    time.Time         `bson:"occurred_at"`
 	Status        TransactionStatus `bson:"status"`

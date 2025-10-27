@@ -6,7 +6,7 @@ type User struct {
 	ID              string    `bson:"_id,omitempty"`
 	Email           string    `bson:"email"`
 	Name            string    `bson:"name"`
-	DefaultCurrency string    `bson:"default_currency"`
+	DefaultCurrency Currency  `bson:"default_currency"`
 	CognitoSub      string    `bson:"cognito_sub"`
 	CreatedAt       time.Time `bson:"created_at"`
 	UpdatedAt       time.Time `bson:"updated_at"`

@@ -24,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 
 import { api } from '../services/api';
+import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
 
 interface Budget {
   id: string;
@@ -42,6 +43,16 @@ interface CategoryOption {
   name: string;
 }
 
+interface BudgetFormState {
+  categoryId: string;
+  amount: number;
+  currency: CurrencyCode;
+  period: string;
+  periodStart: string;
+  periodEnd: string;
+  alertPercent: number;
+}
+
 const periods = [
   { label: 'Monthly', value: 'monthly' },
   { label: 'Quarterly', value: 'quarterly' },
@@ -51,10 +62,10 @@ const periods = [
 const BudgetsPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<BudgetFormState>({
     categoryId: '',
     amount: 0,
-    currency: 'USD',
+    currency: defaultCurrency,
     period: 'monthly',
     periodStart: dayjs().startOf('month').format('YYYY-MM-DD'),
     periodEnd: dayjs().endOf('month').format('YYYY-MM-DD'),
@@ -188,11 +199,19 @@ const BudgetsPage = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 label="Currency"
+                select
                 value={form.currency}
-                onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, currency: event.target.value as CurrencyCode }))
+                }
                 fullWidth
-                inputProps={{ maxLength: 3 }}
-              />
+              >
+                {currencyOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField

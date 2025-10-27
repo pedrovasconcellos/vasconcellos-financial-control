@@ -16,7 +16,7 @@ type Goal struct {
 	Name          string     `bson:"name"`
 	TargetAmount  float64    `bson:"target_amount"`
 	CurrentAmount float64    `bson:"current_amount"`
-	Currency      string     `bson:"currency"`
+	Currency      Currency   `bson:"currency"`
 	Deadline      time.Time  `bson:"deadline"`
 	Status        GoalStatus `bson:"status"`
 	Description   string     `bson:"description"`

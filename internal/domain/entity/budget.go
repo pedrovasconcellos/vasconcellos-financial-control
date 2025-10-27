@@ -15,7 +15,7 @@ type Budget struct {
 	UserID       string       `bson:"user_id"`
 	CategoryID   string       `bson:"category_id"`
 	Amount       float64      `bson:"amount"`
-	Currency     string       `bson:"currency"`
+	Currency     Currency     `bson:"currency"`
 	Period       BudgetPeriod `bson:"period"`
 	PeriodStart  time.Time    `bson:"period_start"`
 	PeriodEnd    time.Time    `bson:"period_end"`

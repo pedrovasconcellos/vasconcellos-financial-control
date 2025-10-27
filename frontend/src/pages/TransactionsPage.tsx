@@ -24,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 
 import { api } from '../services/api';
+import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
 
 interface Transaction {
   id: string;
@@ -49,14 +50,23 @@ interface CategoryOption {
   name: string;
 }
 
+interface TransactionFormState {
+  accountId: string;
+  categoryId: string;
+  amount: number;
+  currency: CurrencyCode;
+  description: string;
+  occurredAt: string;
+}
+
 const TransactionsPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<TransactionFormState>({
     accountId: '',
     categoryId: '',
     amount: 0,
-    currency: 'USD',
+    currency: defaultCurrency,
     description: '',
     occurredAt: dayjs().toISOString()
   });
@@ -87,6 +97,9 @@ const TransactionsPage = () => {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      if (!form.accountId || !form.categoryId || form.amount === 0) {
+        throw new Error('Please fill all required fields with valid values');
+      }
       await api.post('/transactions', {
         accountId: form.accountId,
         categoryId: form.categoryId,
@@ -103,7 +116,7 @@ const TransactionsPage = () => {
         accountId: '',
         categoryId: '',
         amount: 0,
-        currency: 'USD',
+        currency: defaultCurrency,
         description: '',
         occurredAt: dayjs().toISOString()
       });
@@ -225,16 +238,26 @@ const TransactionsPage = () => {
                 onChange={(event) => setForm((prev) => ({ ...prev, amount: Number(event.target.value) }))}
                 fullWidth
                 required
+                inputProps={{ step: "0.01" }}
+                helperText={form.amount === 0 ? "Amount cannot be zero" : ""}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 label="Currency"
+                select
                 value={form.currency}
-                onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, currency: event.target.value as CurrencyCode }))
+                }
                 fullWidth
-                inputProps={{ maxLength: 3 }}
-              />
+              >
+                {currencyOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -264,7 +287,10 @@ const TransactionsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+          <Button 
+            onClick={() => createMutation.mutate()} 
+            disabled={createMutation.isPending || form.amount === 0 || !form.accountId || !form.categoryId}
+          >
             {createMutation.isPending ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>

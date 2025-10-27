@@ -29,7 +29,7 @@ func (uc *AccountUseCase) CreateAccount(ctx context.Context, userID string, requ
 		UserID:      userID,
 		Name:        request.Name,
 		Type:        entity.AccountType(request.Type),
-		Currency:    request.Currency,
+		Currency:    entity.Currency(request.Currency),
 		Description: request.Description,
 		Balance:     request.Balance,
 		CreatedAt:   now,
@@ -44,7 +44,7 @@ func (uc *AccountUseCase) CreateAccount(ctx context.Context, userID string, requ
 		ID:          account.ID,
 		Name:        account.Name,
 		Type:        string(account.Type),
-		Currency:    account.Currency,
+		Currency:    account.Currency.String(),
 		Description: account.Description,
 		Balance:     account.Balance,
 	}, nil
@@ -67,7 +67,7 @@ func (uc *AccountUseCase) UpdateAccount(ctx context.Context, userID string, acco
 		account.Type = entity.AccountType(*request.Type)
 	}
 	if request.Currency != nil {
-		account.Currency = *request.Currency
+		account.Currency = entity.Currency(*request.Currency)
 	}
 	if request.Description != nil {
 		account.Description = *request.Description
@@ -82,7 +82,7 @@ func (uc *AccountUseCase) UpdateAccount(ctx context.Context, userID string, acco
 		ID:          account.ID,
 		Name:        account.Name,
 		Type:        string(account.Type),
-		Currency:    account.Currency,
+		Currency:    account.Currency.String(),
 		Description: account.Description,
 		Balance:     account.Balance,
 	}, nil
@@ -100,7 +100,7 @@ func (uc *AccountUseCase) ListAccounts(ctx context.Context, userID string) ([]*d
 			ID:          account.ID,
 			Name:        account.Name,
 			Type:        string(account.Type),
-			Currency:    account.Currency,
+			Currency:    account.Currency.String(),
 			Description: account.Description,
 			Balance:     account.Balance,
 		})

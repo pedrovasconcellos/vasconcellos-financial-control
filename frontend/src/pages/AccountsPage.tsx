@@ -24,12 +24,21 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { api } from '../services/api';
+import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
 
 interface Account {
   id: string;
   name: string;
   type: string;
   currency: string;
+  description: string;
+  balance: number;
+}
+
+interface AccountFormState {
+  name: string;
+  type: string;
+  currency: CurrencyCode;
   description: string;
   balance: number;
 }
@@ -44,10 +53,10 @@ const accountTypes = [
 const AccountsPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AccountFormState>({
     name: '',
     type: 'checking',
-    currency: 'USD',
+    currency: defaultCurrency,
     description: '',
     balance: 0
   });
@@ -67,7 +76,7 @@ const AccountsPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       setOpen(false);
-      setForm({ name: '', type: 'checking', currency: 'USD', description: '', balance: 0 });
+      setForm({ name: '', type: 'checking', currency: defaultCurrency, description: '', balance: 0 });
     }
   });
 
@@ -162,11 +171,19 @@ const AccountsPage = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 label="Currency"
+                select
                 value={form.currency}
-                onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, currency: event.target.value as CurrencyCode }))
+                }
                 fullWidth
-                inputProps={{ maxLength: 3 }}
-              />
+              >
+                {currencyOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
               <TextField

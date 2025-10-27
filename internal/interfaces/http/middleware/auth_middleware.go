@@ -65,7 +65,7 @@ func (m *AuthMiddleware) Handle() gin.HandlerFunc {
 			ID:              user.ID,
 			Email:           user.Email,
 			Name:            user.Name,
-			DefaultCurrency: user.DefaultCurrency,
+			DefaultCurrency: user.DefaultCurrency.String(),
 			CognitoSub:      user.CognitoSub,
 		})
 

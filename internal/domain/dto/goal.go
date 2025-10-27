@@ -5,7 +5,7 @@ import "time"
 type CreateGoalRequest struct {
 	Name         string    `json:"name" binding:"required"`
 	TargetAmount float64   `json:"targetAmount" binding:"required"`
-	Currency     string    `json:"currency" binding:"required,len=3"`
+	Currency     string    `json:"currency" binding:"required,oneof=USD EUR CHF GBP BRL"`
 	Deadline     time.Time `json:"deadline" binding:"required"`
 	Description  string    `json:"description"`
 }

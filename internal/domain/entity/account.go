@@ -16,7 +16,7 @@ type Account struct {
 	UserID      string      `bson:"user_id"`
 	Name        string      `bson:"name"`
 	Type        AccountType `bson:"type"`
-	Currency    string      `bson:"currency"`
+	Currency    Currency    `bson:"currency"`
 	Balance     float64     `bson:"balance"`
 	Description string      `bson:"description"`
 	CreatedAt   time.Time   `bson:"created_at"`

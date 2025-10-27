@@ -5,7 +5,7 @@ import "time"
 type CreateBudgetRequest struct {
 	CategoryID   string    `json:"categoryId" binding:"required"`
 	Amount       float64   `json:"amount" binding:"required"`
-	Currency     string    `json:"currency" binding:"required,len=3"`
+	Currency     string    `json:"currency" binding:"required,oneof=USD EUR CHF GBP BRL"`
 	Period       string    `json:"period" binding:"required,oneof=monthly quarterly yearly"`
 	PeriodStart  time.Time `json:"periodStart" binding:"required"`
 	PeriodEnd    time.Time `json:"periodEnd" binding:"required"`

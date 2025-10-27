@@ -33,7 +33,7 @@ func (uc *UserUseCase) EnsureUser(ctx context.Context, email string, name string
 		Email:           email,
 		Name:            name,
 		CognitoSub:      cognitoSub,
-		DefaultCurrency: defaultCurrency,
+		DefaultCurrency: entity.Currency(defaultCurrency),
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}
