@@ -1,13 +1,18 @@
-project       = "financial-control"
-environment   = "homolog"
-region        = "us-east-1"
-container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest"
-desired_count = 1
-fargate_cpu   = "256"
-fargate_memory = "512"
-cpu_architecture = "X86_64"
-mongo_instance_type = "t4g.micro"
-monthly_cost_limit = "100"
+# Configuração para App Runner + DocumentDB Serverless
+# Custo estimado: ~USD 45-50/mês
+
+project             = "financial-control"
+environment         = "homolog"
+region              = "us-east-1"
+
+# URI da imagem Docker no ECR (substitua pelo seu account-id)
+container_image     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest"
+
+# DocumentDB master username
+docdb_master_username = "financialcontrol"
+
+# Tags adicionais (opcional)
 extra_tags = {
-  Owner = "time-financial"
+  Owner       = "vasconcellos"
+  CostCenter  = "engineering"
 }
