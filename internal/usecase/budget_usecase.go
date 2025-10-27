@@ -54,8 +54,8 @@ func (uc *BudgetUseCase) CreateBudget(ctx context.Context, userID string, reques
 	}, nil
 }
 
-func (uc *BudgetUseCase) ListBudgets(ctx context.Context, userID string) ([]*dto.BudgetResponse, error) {
-	budgets, err := uc.budgetRepo.List(ctx, userID)
+func (uc *BudgetUseCase) ListBudgets(ctx context.Context, userID string, limit int64, offset int64) ([]*dto.BudgetResponse, error) {
+	budgets, err := uc.budgetRepo.List(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

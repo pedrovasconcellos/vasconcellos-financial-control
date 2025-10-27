@@ -42,7 +42,7 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
 | Node.js | 20.19 or newer (required by Vite 7) |
 | npm | ships with Node 20 |
 | Docker & Docker Compose | latest stable |
-| AWS CLI | configured for staging/production deployments |
+| AWS CLI | configured for homolog/production deployments |
 | AES-256 key | Base64-encoded 32-byte key for receipt encryption (`security.encryptionKey`) |
 
 > **Secrets**: Outside local development, store sensitive values (encryption key, database credentials, AWS keys) in AWS Secrets Manager or Systems Manager Parameter Store and inject them into the runtime. Never version encryption keys.
@@ -63,7 +63,8 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
    - API on `http://localhost:8080` (`/api/v1/health` for readiness)
    - Frontend on `http://localhost:5173`
    - MongoDB on `mongodb://localhost:27017`
-   - LocalStack (S3, SQS, Cognito) configured by `scripts/localstack/00-bootstrap.sh`
+   - LocalStack (S3, SQS, Cognito) configured by `scripts/localstack/00-bootstrap.sh` (creates `financial-transactions-queue` with a dead-letter queue `financial-transactions-dlq` and a redrive policy of 5 attempts)
+   - Transaction lambda worker (`transaction-lambda` service) polling the queue continuously with `LAMBDA_LOCAL=true`
 
 3. **Run services manually (optional)**
    ```bash
@@ -114,7 +115,7 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
 
 All scripts are written for `mongosh`; pipe them through `mongosh <database> < script.js` or use `docker exec` when running MongoDB in Docker.
 
-## Deployment (Staging / Production)
+## Deployment (Homolog / Production)
 
 1. **Configuration**
    - Provide a YAML file via `CONFIG_FILE` (mounted secret or rendered during deploy) and complement with environment variables for sensitive values.
@@ -150,7 +151,21 @@ All scripts are written for `mongosh`; pipe them through `mongosh <database> < s
    npm install
    npm run build
    ```
-   Deploy the contents of `frontend/dist` to S3 + CloudFront or another static hosting solution. Set `VITE_API_URL` (e.g., `https://api.company.com/api/v1`) in the environment prior to building.
+Deploy the contents of `frontend/dist` to S3 + CloudFront or another static hosting solution. Set `VITE_API_URL` (e.g., `https://api.company.com/api/v1`) in the environment prior to building.
+
+## API Endpoints
+
+- `POST /api/v1/auth/login`
+- `GET/POST/PATCH/DELETE /api/v1/accounts`
+- `GET/POST/DELETE /api/v1/categories`
+- `GET/POST/PATCH /api/v1/transactions`
+- `POST /api/v1/transactions/:id/receipt`
+- `GET/POST /api/v1/budgets`
+- `GET/POST /api/v1/goals`
+- `POST /api/v1/goals/:id/progress`
+- `GET /api/v1/reports/summary`
+
+`GET` endpoints for accounts, transactions, budgets, and goals accept optional `limit` and `offset` query parameters (`limit` defaults to 100, capped at 200; `offset` defaults to 0) to support pagination on large datasets.
 
 ### Common Environment Variables
 
@@ -159,7 +174,7 @@ All scripts are written for `mongosh`; pipe them through `mongosh <database> < s
 | `CONFIG_FILE` | Path to the YAML config. |
 | `APP_ENVIRONMENT` | `development`, `homolog`, or `production` (used for logging/metrics). |
 | `AUTH_MODE` | `local` for dev; `cognito` in managed environments. |
-| `security.encryptionKey` | Base64-encoded AES-256 key (must come from a secret in staging/production). |
+| `security.encryptionKey` | Base64-encoded AES-256 key (must come from a secret in homolog/production). |
 
 Consult `config/local_credentials.example.yaml` for the full schema.
 

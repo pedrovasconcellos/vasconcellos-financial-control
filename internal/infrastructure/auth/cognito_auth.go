@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
+	appErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
 
@@ -56,7 +57,10 @@ func (p *CognitoAuthProvider) Login(ctx context.Context, credentials port.AuthCr
 
 	output, err := p.client.InitiateAuth(ctx, input)
 	if err != nil {
-		return nil, err
+		if isCognitoUserError(err) {
+			return nil, appErrors.ErrInvalidInput
+		}
+		return nil, fmt.Errorf("cognito auth failed: %w", err)
 	}
 
 	authResult := output.AuthenticationResult

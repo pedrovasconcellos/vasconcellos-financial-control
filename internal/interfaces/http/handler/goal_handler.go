@@ -56,8 +56,14 @@ func (h *GoalHandler) List(c *gin.Context) {
 		return
 	}
 
-	log.Info("listing goals", zap.String("user_id", user.ID))
-	response, err := h.goalUseCase.ListGoals(c.Request.Context(), user.ID)
+	limit, offset, err := parsePagination(c.Query("limit"), c.Query("offset"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Info("listing goals", zap.String("user_id", user.ID), zap.Int64("limit", limit), zap.Int64("offset", offset))
+	response, err := h.goalUseCase.ListGoals(c.Request.Context(), user.ID, limit, offset)
 	if err != nil {
 		log.Error("failed to list goals", zap.Error(err))
 		respondError(c, err)

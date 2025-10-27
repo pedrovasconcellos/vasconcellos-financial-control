@@ -18,7 +18,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 	if err := os.WriteFile(filePath, []byte(`
 app:
   name: test-app
-  environment: staging
+  environment: homolog
   port: 9000
 mongo:
   uri: mongodb://localhost:27017

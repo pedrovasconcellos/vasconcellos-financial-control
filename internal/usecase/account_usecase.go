@@ -88,8 +88,8 @@ func (uc *AccountUseCase) UpdateAccount(ctx context.Context, userID string, acco
 	}, nil
 }
 
-func (uc *AccountUseCase) ListAccounts(ctx context.Context, userID string) ([]*dto.AccountResponse, error) {
-	accounts, err := uc.accountRepo.List(ctx, userID)
+func (uc *AccountUseCase) ListAccounts(ctx context.Context, userID string, limit int64, offset int64) ([]*dto.AccountResponse, error) {
+	accounts, err := uc.accountRepo.List(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

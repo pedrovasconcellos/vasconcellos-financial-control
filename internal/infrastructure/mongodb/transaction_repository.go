@@ -61,6 +61,7 @@ func (r *TransactionRepository) Update(ctx context.Context, transaction *entity.
 		"tags":           transaction.Tags,
 		"status":         transaction.Status,
 		"receipt_object": transaction.ReceiptObject,
+		"metadata":       transaction.Metadata,
 		"updated_at":     time.Now().UTC(),
 	}})
 	return err
@@ -81,7 +82,7 @@ func (r *TransactionRepository) GetByID(ctx context.Context, id string, userID s
 	return &transaction, nil
 }
 
-func (r *TransactionRepository) List(ctx context.Context, userID string, from time.Time, to time.Time) ([]*entity.Transaction, error) {
+func (r *TransactionRepository) List(ctx context.Context, userID string, from time.Time, to time.Time, limit int64, offset int64) ([]*entity.Transaction, error) {
 	filter := bson.M{
 		"user_id": userID,
 		"occurred_at": bson.M{
@@ -90,6 +91,12 @@ func (r *TransactionRepository) List(ctx context.Context, userID string, from ti
 		},
 	}
 	opts := options.Find().SetSort(bson.D{{Key: "occurred_at", Value: -1}})
+	if limit > 0 {
+		opts.SetLimit(limit)
+	}
+	if offset > 0 {
+		opts.SetSkip(offset)
+	}
 	cursor, err := r.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err

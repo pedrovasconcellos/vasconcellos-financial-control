@@ -19,7 +19,8 @@ import {
   TableCell,
   TableBody,
   Stack,
-  Alert
+  Alert,
+  Skeleton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -60,6 +61,8 @@ const AccountsPage = () => {
     description: '',
     balance: 0
   });
+  const [formErrors, setFormErrors] = useState<{ name?: string; balance?: string }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery<Account[]>({
     queryKey: ['accounts'],
@@ -77,8 +80,35 @@ const AccountsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       setOpen(false);
       setForm({ name: '', type: 'checking', currency: defaultCurrency, description: '', balance: 0 });
+      setFormErrors({});
+      setSubmitError(null);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Failed to create account.';
+      setSubmitError(message);
     }
   });
+
+  const validateForm = () => {
+    const errors: { name?: string; balance?: string } = {};
+    if (!form.name.trim()) {
+      errors.name = 'Name is required.';
+    }
+    if (Number.isNaN(form.balance)) {
+      errors.balance = 'Balance must be a number.';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) {
+      setSubmitError('Please fix the highlighted fields before saving.');
+      return;
+    }
+    setSubmitError(null);
+    createMutation.mutate();
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -98,7 +128,7 @@ const AccountsPage = () => {
         </Button>
       </Stack>
 
-      {isError && <Alert severity="error">Failed to load accounts.</Alert>}
+      {isError && <Alert severity="error">Failed to load accounts list.</Alert>}
 
       <Paper>
         <Table>
@@ -113,12 +143,18 @@ const AccountsPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={6}>Loading...</TableCell>
-              </TableRow>
-            )}
-            {data?.map((account) => (
+            {isLoading &&
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`account-skeleton-${index}`}>
+                  <TableCell><Skeleton variant="text" width={160} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                  <TableCell align="right"><Skeleton variant="text" width={100} /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell align="right"><Skeleton variant="circular" width={24} height={24} /></TableCell>
+                </TableRow>
+              ))}
+            {!isLoading && data?.map((account) => (
               <TableRow key={account.id} hover>
                 <TableCell>{account.name}</TableCell>
                 <TableCell>{account.type}</TableCell>
@@ -136,21 +172,46 @@ const AccountsPage = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && !isError && (data?.length ?? 0) === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No accounts registered yet.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setSubmitError(null);
+          setFormErrors({});
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Create Account</DialogTitle>
         <DialogContent>
+          {submitError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submitError}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 0 }}>
             <Grid item xs={12}>
               <TextField
                 label="Name"
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                onBlur={validateForm}
+                onFocus={() => setFormErrors((prev) => ({ ...prev, name: undefined }))}
                 fullWidth
                 required
+                error={Boolean(formErrors.name)}
+                helperText={formErrors.name}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -193,7 +254,11 @@ const AccountsPage = () => {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, balance: Number(event.target.value) }))
                 }
+                onBlur={validateForm}
+                onFocus={() => setFormErrors((prev) => ({ ...prev, balance: undefined }))}
                 fullWidth
+                error={Boolean(formErrors.balance)}
+                helperText={formErrors.balance}
               />
             </Grid>
             <Grid item xs={12}>
@@ -211,8 +276,16 @@ const AccountsPage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              setSubmitError(null);
+              setFormErrors({});
+            }}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={createMutation.isPending}>
             {createMutation.isPending ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>

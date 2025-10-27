@@ -13,14 +13,20 @@
 ## Persistência e Dados
 
 - MongoDB foi escolhido pela flexibilidade na modelagem de transações, contas e metas.
-- Cada repositório Mongo cria índices primários/compostos para garantir unicidade e consultas eficientes (`user_id + name`, `user_id + occurred_at`, etc.).
+- Todas as coleções utilizam **UUIDs** (`uuid.NewString()` em Go) como identificadores. Documentos legados com `ObjectId` devem ser migrados usando `scripts/convert_objectids_to_uuid.js`.
+- Cada repositório Mongo cria índices compostos para garantir unicidade e consultas eficientes:
+  - `accounts`: `user_id + name` (único), `user_id + created_at`
+  - `transactions`: `user_id + occurred_at`, `category_id + occurred_at`
+  - `budgets`: `user_id + created_at`, `user_id + category_id + period_start + period_end`
+  - `goals`: `user_id + created_at`
 - O cálculo de relatórios agrega dados em memória a partir de coleções de transações, orçamentos e metas, evitando pipelines complexos no Mongo neste primeiro momento.
+- A coleção `processed_transactions` garante idempotência no processamento assíncrono de transações pela lambda.
 
 ## Integração com AWS
 
 - SDK v2 da AWS é utilizado com wrappers finos (`internal/infrastructure/aws`) para S3 (upload/presign), SQS (publicação) e Cognito (autenticação). Informações sensíveis (ex.: `security.encryptionKey`) são injetadas via Secrets Manager/Parameter Store.
 - A configuração suporta LocalStack através de `aws.useLocalstack` e `aws.endpoint`, permitindo rodar tudo localmente sem credenciais reais.
-- SQS recebe eventos de transações para processamento assíncrono. A lambda atualiza os gastos dos orçamentos conforme as mensagens chegam.
+- SQS recebe eventos de transações para processamento assíncrono. A lambda processa as mensagens de forma idempotente marcando transações processadas na coleção `processed_transactions` antes de atualizar os gastos dos orçamentos, implementando rollback automático em caso de erro.
 - O upload de recibos usa S3 com geração de URL pré-assinada para consumo pelo frontend.
 
 ## Autenticação
@@ -44,7 +50,9 @@
 
 ## Docker e Desenvolvimento Local
 
-- `docker-compose.yml` sobe a API, frontend, MongoDB e LocalStack. Script `scripts/localstack/00-bootstrap.sh` cria fila, bucket e estrutura Cognito automaticamente.
+- `docker-compose.yml` sobe a API, frontend, MongoDB, LocalStack e a lambda de processamento. Utiliza `depends_on` com `condition: service_healthy` para garantir inicialização ordenada dos serviços com healthchecks configurados.
+- Script `scripts/localstack/00-bootstrap.sh` cria fila (`financial-transactions-queue`), dead-letter queue (`financial-transactions-dlq`), bucket S3 e estrutura Cognito automaticamente.
+- A lambda rodando em modo local (`LAMBDA_LOCAL=true`) faz polling contínuo da fila SQS e processa mensagens de forma idempotente através da coleção `processed_transactions`.
 - Makefile centraliza comandos (`api-build`, `api-test`, `lambda-build`, `frontend-build`).
 - Para rodar localmente sem Docker basta informar `CONFIG_FILE=config/local_credentials.yaml`, subir MongoDB e invocar `go run ./cmd/api`.
 
@@ -62,6 +70,6 @@
 
 ## Próximos Passos Sugeridos
 
-- Adicionar automação de provisionamento (Terraform/SAM) para infraestrutura real.
+- Automação de provisionamento (Terraform) está disponível em `infra/terraform` para provisionamento completo da infraestrutura AWS.
 - Implementar testes de integração com MongoDB usando contêiner temporário.
 - Expandir a lambda para notificar metas alcançadas e enviar resumos por e-mail/SNS.

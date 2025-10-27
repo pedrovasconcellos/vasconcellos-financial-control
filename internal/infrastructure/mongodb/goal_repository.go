@@ -3,9 +3,11 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/vasconcellos/financial-control/internal/domain/entity"
 	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
@@ -19,7 +21,21 @@ type GoalRepository struct {
 var _ repository.GoalRepository = (*GoalRepository)(nil)
 
 func NewGoalRepository(client *Client) *GoalRepository {
-	return &GoalRepository{collection: client.Collection("goals")}
+	col := client.Collection("goals")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "user_id", Value: 1},
+				{Key: "created_at", Value: -1},
+			},
+		},
+	}
+	_, _ = col.Indexes().CreateMany(ctx, indexModels)
+
+	return &GoalRepository{collection: col}
 }
 
 func (r *GoalRepository) Create(ctx context.Context, goal *entity.Goal) error {
@@ -50,8 +66,16 @@ func (r *GoalRepository) GetByID(ctx context.Context, id string, userID string) 
 	return &goal, nil
 }
 
-func (r *GoalRepository) List(ctx context.Context, userID string) ([]*entity.Goal, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{"user_id": userID})
+func (r *GoalRepository) List(ctx context.Context, userID string, limit int64, offset int64) ([]*entity.Goal, error) {
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	if limit > 0 {
+		opts.SetLimit(limit)
+	}
+	if offset > 0 {
+		opts.SetSkip(offset)
+	}
+
+	cursor, err := r.collection.Find(ctx, bson.M{"user_id": userID}, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"io"
 	"net/http"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/usecase"
 )
@@ -99,8 +99,14 @@ func (h *TransactionHandler) List(c *gin.Context) {
 	}
 
 	from, to := parseDateRange(c.Query("from"), c.Query("to"))
-	log.Info("listing transactions", zap.String("user_id", user.ID), zap.Time("from", from), zap.Time("to", to))
-	response, err := h.transactionUseCase.ListTransactions(c.Request.Context(), user.ID, from, to)
+	limit, offset, err := parsePagination(c.Query("limit"), c.Query("offset"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Info("listing transactions", zap.String("user_id", user.ID), zap.Time("from", from), zap.Time("to", to), zap.Int64("limit", limit), zap.Int64("offset", offset))
+	response, err := h.transactionUseCase.ListTransactions(c.Request.Context(), user.ID, from, to, limit, offset)
 	if err != nil {
 		log.Error("failed to list transactions", zap.Error(err))
 		respondError(c, err)
@@ -128,10 +134,10 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 		return
 	}
 
-	const maxReceiptSize = 5 * 1024 * 1024 // 5MB
-	if file.Size > maxReceiptSize {
-		log.Warn("receipt exceeds size limit", zap.Int64("size", file.Size), zap.Int("limit_bytes", maxReceiptSize))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
+	const maxReceiptSizeBytes = usecase.MaxReceiptSizeBytes
+	if file.Size > 0 && file.Size > maxReceiptSizeBytes {
+		log.Warn("receipt exceeds size limit", zap.Int64("size", file.Size), zap.Int64("limit_bytes", maxReceiptSizeBytes))
+    c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
 		return
 	}
 
@@ -143,9 +149,20 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 	}
 	defer opened.Close()
 
-	limitedReader := io.LimitReader(opened, int64(maxReceiptSize)+1)
-	response, err := h.transactionUseCase.AttachReceipt(c.Request.Context(), user.ID, transactionID, file.Filename, file.Header.Get("Content-Type"), limitedReader)
+	response, err := h.transactionUseCase.AttachReceipt(
+		c.Request.Context(),
+		user.ID,
+		transactionID,
+		file.Filename,
+		file.Header.Get("Content-Type"),
+		opened,
+	)
 	if err != nil {
+		if err == domainErrors.ErrPayloadTooLarge {
+			log.Warn("receipt exceeds size limit during processing", zap.String("transaction_id", transactionID), zap.Int64("limit_bytes", maxReceiptSizeBytes))
+            c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
+			return
+		}
 		log.Error("failed to attach receipt", zap.Error(err))
 		respondError(c, err)
 		return

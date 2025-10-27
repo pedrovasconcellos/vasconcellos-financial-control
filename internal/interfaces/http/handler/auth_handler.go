@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/errors"
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/usecase"
 )
@@ -32,8 +33,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	log.Info("authenticating user", zap.String("username", request.Username))
 	response, err := h.authUseCase.Login(c.Request.Context(), request)
 	if err != nil {
+		status := http.StatusUnauthorized
+		message := "authentication failed"
+		if err == errors.ErrInvalidInput {
+			status = http.StatusBadRequest
+			message = "invalid credentials"
+		}
 		log.Warn("authentication failed", zap.Error(err))
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed"})
+		c.JSON(status, gin.H{"error": message})
 		return
 	}
 
