@@ -47,6 +47,8 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
 - AWS CLI configurada com credenciais apropriadas (para homolog/produção)
 - Chave de criptografia AES-256 (32 bytes base64) para proteção de recibos (`security.encryptionKey`)
 
+> **Parameter Store / Secrets Manager**: para ambientes que não sejam o `dev` local, provisionar as credenciais (especialmente `security.encryptionKey`, usuários de banco, chaves AWS) via **AWS Secrets Manager** ou **Systems Manager Parameter Store**. A aplicação lê o valor de `security.encryptionKey` já de forma dinâmica – basta disponibilizá-lo como variável de ambiente ou arquivo de configuração a partir do secret.
+
 ### 2. Configuração do ambiente **dev** (local)
 
 1. Copie o template:
@@ -54,7 +56,7 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    cp config/local_credentials.example.yaml config/local_credentials.yaml
    ```
    Ajuste campos se necessário; os padrões já apontam para serviços locais via Docker.
-   Gere uma chave de criptografia (ex.: `openssl rand -base64 32`) e preencha `security.encryptionKey`. **Nunca versione essa chave nem utilize-a em homolog/produção; ela deve ser provisionada via AWS Secrets Manager.**
+   Gere uma chave de criptografia (ex.: `openssl rand -base64 32`) e preencha `security.encryptionKey`. **Nunca versione essa chave nem utilize-a em homolog/produção; crie um parâmetro/secret na AWS (Secrets Manager ou Parameter Store) e injete-o via pipeline.**
 
 2. Suba os serviços de apoio com Docker Compose:
    ```bash
@@ -96,8 +98,8 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    - VPC/Subnets/SG conforme política da empresa.
 
 2. **Credenciais e configuração**:
-   - Armazene um YAML com as chaves reais (ex.: `config/hml_credentials.yaml`).
-   - Suba o arquivo para **AWS Secrets Manager** ou **Systems Manager Parameter Store**, e faça com que a esteira de deploy materialize o arquivo no container (ou injete variáveis via `APP_PORT`, `MONGO_URI`, `AWS_REGION` etc.).
+   - Armazene as credenciais em **AWS Secrets Manager** ou **Systems Manager Parameter Store** (ex.: `finance-control/hml/config`). A pipeline deve materializar o arquivo YAML necessário (`CONFIG_FILE`) a partir do secret ou popular as variáveis equivalentes.
+   - Exponha `security.encryptionKey` diretamente via Secret/Parameter (não contido no arquivo YAML) e injete como variável de ambiente.
    - Garanta `auth.mode=cognito` e endpoints reais (`aws.endpoint` vazio).
 
 3. **Deploy da API**:
@@ -214,7 +216,7 @@ Mesma topologia de homolog, com os seguintes cuidados adicionais:
 | `aws.*` | Região, chaves e endpoints; em ambiente AWS deixe `endpoint` vazio para usar o serviço real. |
 | `queue.transactionQueue` | Nome lógico da fila; apontado para uma fila distinta por ambiente. |
 | `storage.receiptBucket` | Bucket diferente por ambiente (ex.: `finance-control-receipts-dev|hml|prd`). |
-| `security.encryptionKey` | Chave AES-256 em base64 utilizada para criptografar recibos antes do upload ao S3. Em homolog/produção deve ser fornecida via AWS Secrets Manager / Parameter Store. |
+| `security.encryptionKey` | Chave AES-256 em base64 utilizada para criptografar recibos antes do upload ao S3. Em homolog/produção deve vir de AWS Secrets Manager/Parameter Store e ser injetada via variável de ambiente. |
 
 Idealmente:
 - Mantenha três arquivos de configuração:
