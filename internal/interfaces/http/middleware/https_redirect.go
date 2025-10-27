@@ -45,6 +45,5 @@ func (m *HTTPSRedirectMiddleware) Handle() gin.HandlerFunc {
 		httpsURL := "https://" + c.Request.Host + c.Request.RequestURI
 		c.Redirect(http.StatusMovedPermanently, httpsURL)
 		c.Abort()
-		return
 	}
 }
