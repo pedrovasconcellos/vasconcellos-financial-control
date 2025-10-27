@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
 )
 
 // TestAccountUseCaseCreate lista a criação básica garantindo persistência no repositório

@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
 )
 
 type AccountRepository interface {

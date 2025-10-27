@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/vasconcellos/finance-control/internal/interfaces/http/handler"
-	"github.com/vasconcellos/finance-control/internal/interfaces/http/middleware"
+	"github.com/vasconcellos/financial-control/internal/interfaces/http/handler"
+	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 )
 
 type RouterParams struct {

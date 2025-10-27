@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
-	domainerrors "github.com/vasconcellos/finance-control/internal/domain/errors"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
+	domainerrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 )
 
 // TestTransactionUseCaseRecordTransactionValorInvalido garante que valores não positivos geram erro de validação
@@ -42,7 +42,7 @@ func TestTransactionUseCaseRecordTransactionDespesa(t *testing.T) {
 	}}
 	queue := &queuePublisherStub{}
 
-	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, nil, "finance-queue", nil)
+	uc := NewTransactionUseCase(txRepo, accountRepo, categoryRepo, queue, nil, "financial-queue", nil)
 
 	_, err := uc.RecordTransaction(context.Background(), "user", dto.CreateTransactionRequest{
 		AccountID:  "acc",

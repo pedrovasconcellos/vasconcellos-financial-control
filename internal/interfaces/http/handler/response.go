@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	domainErrors "github.com/vasconcellos/finance-control/internal/domain/errors"
+	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 )
 
 func respondError(c *gin.Context, err error) {

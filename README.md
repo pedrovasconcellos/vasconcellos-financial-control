@@ -1,6 +1,6 @@
-# Finance Control Platform
+# Financial Control Platform
 
-Finance Control is a clean-architecture Go backend paired with a React + Material UI frontend for managing personal finances. It integrates with MongoDB for persistence, Amazon S3 and SQS (via LocalStack in local environments), and Cognito for authentication. Asynchronous workloads are handled by an AWS Lambda written in Go that consumes the transactional queue.
+Financial Control is a clean-architecture Go backend paired with a React + Material UI frontend for managing personal financials. It integrates with MongoDB for persistence, Amazon S3 and SQS (via LocalStack in local environments), and Cognito for authentication. Asynchronous workloads are handled by an AWS Lambda written in Go that consumes the transactional queue.
 
 ## Features
 
@@ -92,26 +92,26 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
 
 1. **Recursos AWS necessários** (crie via CloudFormation/Terraform ou manualmente):
    - Amazon Cognito User Pool e App Client (`USER_PASSWORD_AUTH` habilitado).
-   - Amazon SQS queue (ex.: `finance-transactions-queue`) + DLQ opcional.
-   - Amazon S3 bucket para recibos (`finance-control-receipts-hml`).
+   - Amazon SQS queue (ex.: `financial-transactions-queue`) + DLQ opcional.
+   - Amazon S3 bucket para recibos (`financial-control-receipts-hml`).
    - Banco de dados compatível com MongoDB (DocumentDB ou MongoDB Atlas).
    - VPC/Subnets/SG conforme política da empresa.
 
 2. **Credenciais e configuração**:
-   - Armazene as credenciais em **AWS Secrets Manager** ou **Systems Manager Parameter Store** (ex.: `finance-control/hml/config`). A pipeline deve materializar o arquivo YAML necessário (`CONFIG_FILE`) a partir do secret ou popular as variáveis equivalentes.
+   - Armazene as credenciais em **AWS Secrets Manager** ou **Systems Manager Parameter Store** (ex.: `financial-control/hml/config`). A pipeline deve materializar o arquivo YAML necessário (`CONFIG_FILE`) a partir do secret ou popular as variáveis equivalentes.
    - Exponha `security.encryptionKey` diretamente via Secret/Parameter (não contido no arquivo YAML) e injete como variável de ambiente.
    - Garanta `auth.mode=cognito` e endpoints reais (`aws.endpoint` vazio).
 
 3. **Deploy da API**:
    - Construa a imagem:
      ```bash
-     docker build -t finance-api:latest .
+     docker build -t financial-api:latest .
      ```
    - Publique em um registry (ECR):
      ```bash
-     aws ecr create-repository --repository-name finance-api --region us-east-1
-     docker tag finance-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-api:latest
-     docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-api:latest
+     aws ecr create-repository --repository-name financial-api --region us-east-1
+     docker tag financial-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/financial-api:latest
+     docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/financial-api:latest
      ```
    - Execute em ECS Fargate (recomendado) ou EC2 com Systemd. Configure as variáveis:
      ```
@@ -126,7 +126,7 @@ O mecanismo de configuração é único para todos os ambientes: a aplicação c
    GOOS=linux GOARCH=amd64 go build -o bootstrap ./cmd/lambdas/transaction_processor
    zip lambda.zip bootstrap
    aws lambda create-function \
-     --function-name finance-transaction-processor-hml \
+     --function-name financial-transaction-processor-hml \
      --zip-file fileb://lambda.zip \
      --handler bootstrap \
      --runtime provided.al2 \
@@ -163,10 +163,10 @@ Uma stack Terraform está disponível em `infra/terraform` para criar todos os r
 
 2. Construa e publique a imagem multi-arquitetura no ECR indicado:
    ```bash
-   docker buildx build --platform linux/amd64,linux/arm64 -t finance-api:latest ../../
+   docker buildx build --platform linux/amd64,linux/arm64 -t financial-api:latest ../../
    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
-   docker tag finance-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
-   docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/finance-control-api:latest
+   docker tag financial-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest
+   docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/financial-control-api:latest
    ```
 
 3. Execute:
@@ -215,7 +215,7 @@ Mesma topologia de homolog, com os seguintes cuidados adicionais:
 | `auth.mode` | `local` (dev) ou `cognito` (homolog/prod). |
 | `aws.*` | Região, chaves e endpoints; em ambiente AWS deixe `endpoint` vazio para usar o serviço real. |
 | `queue.transactionQueue` | Nome lógico da fila; apontado para uma fila distinta por ambiente. |
-| `storage.receiptBucket` | Bucket diferente por ambiente (ex.: `finance-control-receipts-dev|hml|prd`). |
+| `storage.receiptBucket` | Bucket diferente por ambiente (ex.: `financial-control-receipts-dev|hml|prd`). |
 | `security.encryptionKey` | Chave AES-256 em base64 utilizada para criptografar recibos antes do upload ao S3. Em homolog/produção deve vir de AWS Secrets Manager/Parameter Store e ser injetada via variável de ambiente. |
 
 Idealmente:
@@ -229,7 +229,7 @@ Idealmente:
 
 1. Esteira CI (GitHub Actions/GitLab):
    - Rodar `go test ./...`, `npm run build`, `npm audit`.
-   - Construir imagem Docker (`finance-api`) e enviar ao ECR.
+   - Construir imagem Docker (`financial-api`) e enviar ao ECR.
    - Empacotar frontend e publicar no S3/CloudFront.
    - Build e deploy da lambda (via `aws lambda update-function-code`).
 
@@ -252,7 +252,7 @@ Every protected route expects a Bearer token validated via Cognito (or local ses
 
 ### Lambda pipeline
 
-Transactions trigger an SQS message (`finance-transactions-queue`). The Go Lambda consumes the queue, enriches budget metrics, and keeps MongoDB values synchronised. The handler shares the same domain models and repositories as the API, ensuring business invariants stay consistent.
+Transactions trigger an SQS message (`financial-transactions-queue`). The Go Lambda consumes the queue, enriches budget metrics, and keeps MongoDB values synchronised. The handler shares the same domain models and repositories as the API, ensuring business invariants stay consistent.
 
 ## Environment variables
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/vasconcellos/finance-control/internal/config"
-	"github.com/vasconcellos/finance-control/internal/domain/port"
+	"github.com/vasconcellos/financial-control/internal/config"
+	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
 
 type LocalAuthProvider struct {

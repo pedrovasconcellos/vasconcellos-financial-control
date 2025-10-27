@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
-	"github.com/vasconcellos/finance-control/internal/domain/port"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
+	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
 
 type accountRepositoryStub struct {

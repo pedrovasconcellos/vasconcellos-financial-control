@@ -7,9 +7,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
-	domainErrors "github.com/vasconcellos/finance-control/internal/domain/errors"
-	"github.com/vasconcellos/finance-control/internal/domain/repository"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
+	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
+	"github.com/vasconcellos/financial-control/internal/domain/repository"
 )
 
 type GoalRepository struct {

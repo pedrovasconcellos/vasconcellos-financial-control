@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/vasconcellos/finance-control/internal/domain/port"
+	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
 
 type CognitoAuthProvider struct {

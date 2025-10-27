@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/domain/port"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
 
 type fakeAuthProvider struct {

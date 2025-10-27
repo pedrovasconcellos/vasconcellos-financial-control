@@ -10,9 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/vasconcellos/finance-control/internal/domain/entity"
-	domainErrors "github.com/vasconcellos/finance-control/internal/domain/errors"
-	"github.com/vasconcellos/finance-control/internal/domain/repository"
+	"github.com/vasconcellos/financial-control/internal/domain/entity"
+	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
+	"github.com/vasconcellos/financial-control/internal/domain/repository"
 )
 
 type AccountRepository struct {

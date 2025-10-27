@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"go.uber.org/zap"
 
-	"github.com/vasconcellos/finance-control/internal/config"
-	"github.com/vasconcellos/finance-control/internal/infrastructure/mongodb"
+	"github.com/vasconcellos/financial-control/internal/config"
+	"github.com/vasconcellos/financial-control/internal/infrastructure/mongodb"
 )
 
 type transactionEvent struct {

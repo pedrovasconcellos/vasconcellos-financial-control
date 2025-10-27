@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/vasconcellos/finance-control/internal/domain/dto"
-	"github.com/vasconcellos/finance-control/internal/domain/repository"
+	"github.com/vasconcellos/financial-control/internal/domain/dto"
+	"github.com/vasconcellos/financial-control/internal/domain/repository"
 )
 
 type ReportUseCase struct {

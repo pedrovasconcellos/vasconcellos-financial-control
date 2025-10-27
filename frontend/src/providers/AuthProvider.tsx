@@ -17,7 +17,7 @@ interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'finance-control-auth';
+const STORAGE_KEY = 'financial-control-auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tokens, setTokensState] = useState<AuthTokens | null>(() => {

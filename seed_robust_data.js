@@ -1,5 +1,5 @@
 // Script para criar massa de dados robusta com 3 anos de histórico
-db = db.getSiblingDB('finance-control');
+db = db.getSiblingDB('financial-control');
 
 // Primeiro, vamos encontrar o user_id correto
 const user = db.users.findOne({email: "vasconcellos@gmail.com"});
@@ -134,7 +134,7 @@ const categories = {
         user_id: vasconcellosUserId,
         name: "Investimentos",
         type: "expense",
-        description: "Aplicações financeiras",
+        description: "Aplicações financialiras",
         created_at: new Date("2022-01-01"),
         updated_at: new Date("2022-01-01")
     }).insertedId.toString()
@@ -543,7 +543,7 @@ print("   ✅ " + Object.keys(categories).length + " categorias criadas");
 print("   ✅ " + Object.keys(accounts).length + " contas criadas (Nubank, Inter, Itaú)");
 print("   ✅ " + result.insertedIds.length + " transações criadas (3 anos de histórico)");
 print("   ✅ 3 orçamentos ativos");
-print("   ✅ 3 metas financeiras");
+print("   ✅ 3 metas financialiras");
 print("\n🎉 Massa de dados do Vasconcellos criada com sucesso!");
 
 // ============================================================================
@@ -614,7 +614,7 @@ const testeCategories = {
         user_id: testeUserId,
         name: "Investimentos",
         type: "expense",
-        description: "Aplicações financeiras",
+        description: "Aplicações financialiras",
         created_at: new Date("2022-02-20"),
         updated_at: new Date("2022-02-20")
     }).insertedId.toString()
@@ -773,13 +773,13 @@ db.budgets.insertMany([
 db.goals.insertMany([
     {
         user_id: testeUserId,
-        name: "Independência Financeira",
+        name: "Independência Financialira",
         target_amount: 500000,
         current_amount: 120000,
         currency: "BRL",
         deadline: new Date("2028-12-31"),
         status: "active",
-        description: "Meta de patrimônio para independência financeira",
+        description: "Meta de patrimônio para independência financialira",
         created_at: new Date("2022-02-20"),
         updated_at: new Date("2024-10-25")
     },
@@ -802,6 +802,6 @@ print("   ✅ " + Object.keys(testeCategories).length + " categorias criadas");
 print("   ✅ " + Object.keys(testeAccounts).length + " contas criadas");
 print("   ✅ " + Object.keys(testeResult.insertedIds).length + " transações criadas");
 print("   ✅ 3 orçamentos ativos");
-print("   ✅ 2 metas financeiras");
+print("   ✅ 2 metas financialiras");
 print("\n🎉 Massa de dados do Teste criada com sucesso!");
 
