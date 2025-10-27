@@ -43,6 +43,8 @@ type S3Config struct {
 type SQSConfig struct {
 	QueueName string
 	QueueURL  string
+	DeadLetterQueueName string
+	DeadLetterQueueURL  string
 }
 
 type AWSConfig struct {
@@ -163,10 +165,12 @@ func LoadConfig() (*Config, error) {
 				S3: S3Config{
 					Bucket: viper.GetString("aws.s3.bucket"),
 				},
-				SQS: SQSConfig{
-					QueueName: viper.GetString("aws.sqs.queueName"),
-					QueueURL:  viper.GetString("aws.sqs.queueUrl"),
-				},
+			SQS: SQSConfig{
+				QueueName: viper.GetString("aws.sqs.queueName"),
+				QueueURL:  viper.GetString("aws.sqs.queueUrl"),
+				DeadLetterQueueName: viper.GetString("aws.sqs.deadLetterQueueName"),
+				DeadLetterQueueURL:  viper.GetString("aws.sqs.deadLetterQueueUrl"),
+			},
 				Cognito: CognitoConfig{
 					UserPoolID: viper.GetString("aws.cognito.userPoolId"),
 					ClientID:   viper.GetString("aws.cognito.clientId"),
@@ -221,6 +225,9 @@ func setDefaults() {
 	viper.SetDefault("aws.credentialsSource", "env")
 	viper.SetDefault("aws.s3.bucket", "financial-control-receipts")
 	viper.SetDefault("aws.sqs.queueName", "financial-transactions-queue")
+	viper.SetDefault("aws.sqs.queueUrl", "")
+	viper.SetDefault("aws.sqs.deadLetterQueueName", "financial-transactions-dlq")
+	viper.SetDefault("aws.sqs.deadLetterQueueUrl", "")
 	viper.SetDefault("aws.cognito.region", "us-east-1")
 	viper.SetDefault("aws.cognito.domain", "http://localhost:4566")
 

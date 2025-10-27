@@ -40,11 +40,14 @@ func TestAccountUseCaseList(t *testing.T) {
 	repo.Create(context.Background(), &entity.Account{ID: "a3", UserID: "user-2", Name: "Conta C"})
 
 	uc := NewAccountUseCase(repo)
-	resp, err := uc.ListAccounts(context.Background(), "user-1")
+    resp, err := uc.ListAccounts(context.Background(), "user-1", 10, 0)
 	if err != nil {
 		t.Fatalf("esperava listagem sem erros, obteve: %v", err)
 	}
 	if len(resp) != 2 {
 		t.Fatalf("esperava 2 contas, obtido %d", len(resp))
+	}
+	if repo.lastLimit != 10 || repo.lastOffset != 0 {
+		t.Fatalf("esperava limit=10 offset=0, obtido limit=%d offset=%d", repo.lastLimit, repo.lastOffset)
 	}
 }

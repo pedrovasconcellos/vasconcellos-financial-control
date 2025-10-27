@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	appErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 	"github.com/vasconcellos/financial-control/internal/config"
 	"github.com/vasconcellos/financial-control/internal/domain/port"
 )
@@ -43,7 +44,7 @@ func (p *LocalAuthProvider) Login(ctx context.Context, credentials port.AuthCred
 	_ = ctx
 	user, ok := p.users[credentials.Username]
 	if !ok || user.Password != credentials.Password {
-		return nil, fmt.Errorf("invalid credentials")
+		return nil, appErrors.ErrInvalidInput
 	}
 
     accessToken := base64.StdEncoding.EncodeToString([]byte(uuid.NewString()))

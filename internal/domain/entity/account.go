@@ -12,7 +12,7 @@ const (
 )
 
 type Account struct {
-	ID          string      `bson:"_id,omitempty"`
+	ID          string      `bson:"_id"`
 	UserID      string      `bson:"user_id"`
 	Name        string      `bson:"name"`
 	Type        AccountType `bson:"type"`

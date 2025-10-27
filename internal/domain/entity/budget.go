@@ -11,7 +11,7 @@ const (
 )
 
 type Budget struct {
-	ID           string       `bson:"_id,omitempty"`
+	ID           string       `bson:"_id"`
 	UserID       string       `bson:"user_id"`
 	CategoryID   string       `bson:"category_id"`
 	Amount       float64      `bson:"amount"`

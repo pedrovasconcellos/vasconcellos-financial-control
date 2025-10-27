@@ -37,3 +37,4 @@ ENV CONFIG_FILE=/app/config/local_credentials.yaml
 EXPOSE 8080
 
 ENTRYPOINT ["/app/api"]
+

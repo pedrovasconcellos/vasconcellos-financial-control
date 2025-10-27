@@ -54,8 +54,8 @@ func (uc *GoalUseCase) CreateGoal(ctx context.Context, userID string, request dt
 	}, nil
 }
 
-func (uc *GoalUseCase) ListGoals(ctx context.Context, userID string) ([]*dto.GoalResponse, error) {
-	goals, err := uc.goalRepo.List(ctx, userID)
+func (uc *GoalUseCase) ListGoals(ctx context.Context, userID string, limit int64, offset int64) ([]*dto.GoalResponse, error) {
+	goals, err := uc.goalRepo.List(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

@@ -37,6 +37,7 @@ func (s *Storage) Upload(ctx context.Context, key string, body io.Reader, conten
 		Body:        body,
 		ContentType: aws.String(contentType),
 		ACL:         types.ObjectCannedACLPrivate,
+		ServerSideEncryption: types.ServerSideEncryptionAes256,
 	})
 	if err != nil {
 		return "", err

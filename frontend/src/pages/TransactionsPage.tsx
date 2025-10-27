@@ -19,7 +19,8 @@ import {
   TableRow,
   TableCell,
   Stack,
-  Chip
+  Chip,
+  Skeleton
 } from '@mui/material';
 import dayjs from 'dayjs';
 
@@ -70,6 +71,8 @@ const TransactionsPage = () => {
     description: '',
     occurredAt: dayjs().toISOString()
   });
+  const [formErrors, setFormErrors] = useState<{ accountId?: string; categoryId?: string; amount?: string }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const transactionsQuery = useQuery<Transaction[]>({
     queryKey: ['transactions'],
@@ -97,9 +100,6 @@ const TransactionsPage = () => {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!form.accountId || !form.categoryId || form.amount === 0) {
-        throw new Error('Please fill all required fields with valid values');
-      }
       await api.post('/transactions', {
         accountId: form.accountId,
         categoryId: form.categoryId,
@@ -120,8 +120,38 @@ const TransactionsPage = () => {
         description: '',
         occurredAt: dayjs().toISOString()
       });
+      setFormErrors({});
+      setSubmitError(null);
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Failed to save transaction.';
+      setSubmitError(message);
     }
   });
+
+  const validateForm = () => {
+    const errors: { accountId?: string; categoryId?: string; amount?: string } = {};
+    if (!form.accountId) {
+      errors.accountId = 'Account is required.';
+    }
+    if (!form.categoryId) {
+      errors.categoryId = 'Category is required.';
+    }
+    if (!form.amount || Number.isNaN(form.amount) || form.amount <= 0) {
+      errors.amount = 'Amount must be greater than zero.';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) {
+      setSubmitError('Please fix the highlighted fields before saving.');
+      return;
+    }
+    setSubmitError(null);
+    createMutation.mutate();
+  };
 
   const accounts = accountsQuery.data ?? [];
   const categories = categoriesQuery.data ?? [];
@@ -135,6 +165,10 @@ const TransactionsPage = () => {
     [categories]
   );
 
+  const showTransactionsError = transactionsQuery.isError;
+  const showAccountsError = accountsQuery.isError;
+  const showCategoriesError = categoriesQuery.isError;
+
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
@@ -144,8 +178,12 @@ const TransactionsPage = () => {
         </Button>
       </Stack>
 
-      {(transactionsQuery.isError || accountsQuery.isError || categoriesQuery.isError) && (
-        <Alert severity="error">Unable to load transaction data.</Alert>
+      {(showTransactionsError || showAccountsError || showCategoriesError) && (
+        <Stack spacing={2} mb={2}>
+          {showTransactionsError && <Alert severity="error">Failed to load transactions.</Alert>}
+          {showAccountsError && <Alert severity="error">Failed to load accounts list.</Alert>}
+          {showCategoriesError && <Alert severity="error">Failed to load categories list.</Alert>}
+        </Stack>
       )}
 
       <Paper>
@@ -162,12 +200,20 @@ const TransactionsPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {transactionsQuery.isLoading && (
-              <TableRow>
-                <TableCell colSpan={7}>Loading...</TableCell>
-              </TableRow>
-            )}
-            {transactionsQuery.data?.map((transaction) => (
+            {transactionsQuery.isLoading &&
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`transaction-skeleton-${index}`}>
+                  <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                  <TableCell><Skeleton variant="text" /></TableCell>
+                  <TableCell><Skeleton variant="text" width={140} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={140} /></TableCell>
+                  <TableCell align="right"><Skeleton variant="text" width={100} /></TableCell>
+                  <TableCell><Skeleton variant="rectangular" width={80} height={24} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                </TableRow>
+              ))}
+            {!transactionsQuery.isLoading &&
+              transactionsQuery.data?.map((transaction) => (
               <TableRow key={transaction.id} hover>
                 <TableCell>{dayjs(transaction.occurredAt).format('YYYY-MM-DD')}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
@@ -189,59 +235,91 @@ const TransactionsPage = () => {
                   )}
                 </TableCell>
               </TableRow>
-            ))}
+              ))}
+            {!transactionsQuery.isLoading && !showTransactionsError && (transactionsQuery.data?.length ?? 0) === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No transactions recorded yet.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setSubmitError(null);
+          setFormErrors({});
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Record Transaction</DialogTitle>
         <DialogContent>
+          {submitError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submitError}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 0 }}>
             <Grid item xs={12}>
-              <TextField
-                label="Account"
-                select
-                value={form.accountId}
-                onChange={(event) => setForm((prev) => ({ ...prev, accountId: event.target.value }))}
-                fullWidth
-                required
-              >
-                {accounts.map((account) => (
-                  <MenuItem key={account.id} value={account.id}>
-                    {account.name}
-                  </MenuItem>
+                <TextField
+                  label="Account"
+                  select
+                  value={form.accountId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, accountId: event.target.value }))}
+                  onBlur={validateForm}
+                  onFocus={() => setFormErrors((prev) => ({ ...prev, accountId: undefined }))}
+                  fullWidth
+                  required
+                  error={Boolean(formErrors.accountId)}
+                  helperText={formErrors.accountId}
+                >
+                  {accounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>
+                      {account.name}
+                    </MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Category"
-                select
-                value={form.categoryId}
-                onChange={(event) => setForm((prev) => ({ ...prev, categoryId: event.target.value }))}
-                fullWidth
-                required
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
+                <TextField
+                  label="Category"
+                  select
+                  value={form.categoryId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, categoryId: event.target.value }))}
+                  onBlur={validateForm}
+                  onFocus={() => setFormErrors((prev) => ({ ...prev, categoryId: undefined }))}
+                  fullWidth
+                  required
+                  error={Boolean(formErrors.categoryId)}
+                  helperText={formErrors.categoryId}
+                >
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
                 ))}
               </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="Amount"
-                type="number"
-                value={form.amount}
-                onChange={(event) => setForm((prev) => ({ ...prev, amount: Number(event.target.value) }))}
-                fullWidth
-                required
-                inputProps={{ step: "0.01" }}
-                helperText={form.amount === 0 ? "Amount cannot be zero" : ""}
-              />
-            </Grid>
+                <TextField
+                  label="Amount"
+                  type="number"
+                  value={form.amount}
+                  onChange={(event) => setForm((prev) => ({ ...prev, amount: Number(event.target.value) }))}
+                  onBlur={validateForm}
+                  onFocus={() => setFormErrors((prev) => ({ ...prev, amount: undefined }))}
+                  fullWidth
+                  required
+                  inputProps={{ step: "0.01" }}
+                  error={Boolean(formErrors.amount)}
+                  helperText={formErrors.amount ?? ''}
+                />
+              </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 label="Currency"
@@ -286,10 +364,18 @@ const TransactionsPage = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={() => createMutation.mutate()} 
-            disabled={createMutation.isPending || form.amount === 0 || !form.accountId || !form.categoryId}
+          <Button
+            onClick={() => {
+              setOpen(false);
+              setSubmitError(null);
+              setFormErrors({});
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={createMutation.isPending}
           >
             {createMutation.isPending ? 'Saving...' : 'Save'}
           </Button>

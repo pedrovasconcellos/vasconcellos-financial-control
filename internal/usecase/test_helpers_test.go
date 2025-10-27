@@ -13,6 +13,8 @@ type accountRepositoryStub struct {
 	created     []*entity.Account
 	storage     map[string]*entity.Account
 	adjustments []float64
+	lastLimit   int64
+	lastOffset  int64
 }
 
 func newAccountRepositoryStub() *accountRepositoryStub {
@@ -39,14 +41,28 @@ func (s *accountRepositoryStub) GetByID(ctx context.Context, id string, userID s
 	return s.storage[id], nil
 }
 
-func (s *accountRepositoryStub) List(ctx context.Context, userID string) ([]*entity.Account, error) {
-	var result []*entity.Account
+func (s *accountRepositoryStub) List(ctx context.Context, userID string, limit int64, offset int64) ([]*entity.Account, error) {
+	s.lastLimit = limit
+	s.lastOffset = offset
+	var filtered []*entity.Account
 	for _, account := range s.storage {
 		if account.UserID == userID {
-			result = append(result, account)
+			filtered = append(filtered, account)
 		}
 	}
-	return result, nil
+
+	start := offset
+	if start > int64(len(filtered)) {
+		start = int64(len(filtered))
+	}
+	end := start + limit
+	if limit <= 0 || end > int64(len(filtered)) {
+		end = int64(len(filtered))
+	}
+
+	startIdx := int(start)
+	endIdx := int(end)
+	return filtered[startIdx:endIdx], nil
 }
 
 func (s *accountRepositoryStub) AdjustBalance(ctx context.Context, id string, userID string, amount float64) error {
@@ -62,6 +78,8 @@ type transactionRepositoryStub struct {
 	storage      map[string]*entity.Transaction
 	lastUpdated  *entity.Transaction
 	listResponse []*entity.Transaction
+	lastLimit    int64
+	lastOffset   int64
 }
 
 func newTransactionRepositoryStub() *transactionRepositoryStub {
@@ -84,7 +102,7 @@ func (s *transactionRepositoryStub) GetByID(ctx context.Context, id string, user
 	return s.storage[id], nil
 }
 
-func (s *transactionRepositoryStub) List(ctx context.Context, userID string, from time.Time, to time.Time) ([]*entity.Transaction, error) {
+func (s *transactionRepositoryStub) List(ctx context.Context, userID string, from time.Time, to time.Time, limit int64, offset int64) ([]*entity.Transaction, error) {
 	if s.listResponse != nil {
 		return s.listResponse, nil
 	}
@@ -94,7 +112,19 @@ func (s *transactionRepositoryStub) List(ctx context.Context, userID string, fro
 			result = append(result, txn)
 		}
 	}
-	return result, nil
+	s.lastLimit = limit
+	s.lastOffset = offset
+	start := offset
+	if start > int64(len(result)) {
+		start = int64(len(result))
+	}
+	end := start + limit
+	if limit <= 0 || end > int64(len(result)) {
+		end = int64(len(result))
+	}
+	startIdx := int(start)
+	endIdx := int(end)
+	return result[startIdx:endIdx], nil
 }
 
 func (s *transactionRepositoryStub) ListByCategory(ctx context.Context, userID string, categoryID string, from time.Time, to time.Time) ([]*entity.Transaction, error) {

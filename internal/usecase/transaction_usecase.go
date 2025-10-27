@@ -1,11 +1,12 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,9 @@ type TransactionUseCase struct {
 	encryptionKey   []byte
 }
 
+const MaxReceiptSizeBytes int64 = 5 * 1024 * 1024
+const notesEncryptedMetadataKey = "notes_encrypted"
+
 func NewTransactionUseCase(
 	transactionRepo repository.TransactionRepository,
 	accountRepo repository.AccountRepository,
@@ -46,6 +50,52 @@ func NewTransactionUseCase(
 		eventQueueName:  eventQueueName,
 		encryptionKey:   encryptionKey,
 	}
+}
+
+func (uc *TransactionUseCase) encryptNotes(notes string, metadata map[string]string) (string, error) {
+	if notes == "" {
+		if metadata != nil {
+			delete(metadata, notesEncryptedMetadataKey)
+		}
+		return "", nil
+	}
+	if len(uc.encryptionKey) == 0 {
+		if metadata != nil {
+			delete(metadata, notesEncryptedMetadataKey)
+		}
+		return notes, nil
+	}
+	if metadata != nil {
+		metadata[notesEncryptedMetadataKey] = "true"
+	}
+
+	ciphertext, err := security.EncryptAESGCM([]byte(notes), uc.encryptionKey)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func (uc *TransactionUseCase) decryptNotes(notes string, metadata map[string]string) (string, error) {
+	if notes == "" {
+		return "", nil
+	}
+	if len(uc.encryptionKey) == 0 {
+		return notes, nil
+	}
+	if metadata == nil || metadata[notesEncryptedMetadataKey] != "true" {
+		return notes, nil
+	}
+
+	raw, err := base64.StdEncoding.DecodeString(notes)
+	if err != nil {
+		return "", err
+	}
+	plaintext, err := security.DecryptAESGCM(raw, uc.encryptionKey)
+	if err != nil {
+		return "", err
+	}
+	return string(plaintext), nil
 }
 
 func (uc *TransactionUseCase) RecordTransaction(ctx context.Context, userID string, request dto.CreateTransactionRequest) (*dto.TransactionResponse, error) {
@@ -77,6 +127,11 @@ func (uc *TransactionUseCase) RecordTransaction(ctx context.Context, userID stri
 		UpdatedAt:   now,
 		Metadata:    map[string]string{},
 	}
+	encryptedNotes, err := uc.encryptNotes(transaction.Notes, transaction.Metadata)
+	if err != nil {
+		return nil, err
+	}
+	transaction.Notes = encryptedNotes
 
 	if category.Type == entity.CategoryTypeExpense {
 		if err := uc.accountRepo.AdjustBalance(ctx, request.AccountID, userID, -request.Amount); err != nil {
@@ -89,6 +144,10 @@ func (uc *TransactionUseCase) RecordTransaction(ctx context.Context, userID stri
 	}
 
 	if err := uc.transactionRepo.Create(ctx, transaction); err != nil {
+		return nil, err
+	}
+	notesValue, err := uc.decryptNotes(transaction.Notes, transaction.Metadata)
+	if err != nil {
 		return nil, err
 	}
 
@@ -123,7 +182,7 @@ func (uc *TransactionUseCase) RecordTransaction(ctx context.Context, userID stri
 		OccurredAt:  transaction.OccurredAt,
 		Status:      string(transaction.Status),
 		Tags:        transaction.Tags,
-		Notes:       transaction.Notes,
+		Notes:       notesValue,
 	}, nil
 }
 
@@ -152,8 +211,22 @@ func (uc *TransactionUseCase) UpdateTransaction(ctx context.Context, userID stri
 		transaction.Status = entity.TransactionStatus(*request.Status)
 	}
 	transaction.UpdatedAt = time.Now().UTC()
+	if request.Notes != nil {
+		if transaction.Metadata == nil {
+			transaction.Metadata = map[string]string{}
+		}
+		encryptedNotes, encryptErr := uc.encryptNotes(transaction.Notes, transaction.Metadata)
+		if encryptErr != nil {
+			return nil, encryptErr
+		}
+		transaction.Notes = encryptedNotes
+	}
 
 	if err := uc.transactionRepo.Update(ctx, transaction); err != nil {
+		return nil, err
+	}
+	notesValue, err := uc.decryptNotes(transaction.Notes, transaction.Metadata)
+	if err != nil {
 		return nil, err
 	}
 
@@ -167,12 +240,12 @@ func (uc *TransactionUseCase) UpdateTransaction(ctx context.Context, userID stri
 		OccurredAt:  transaction.OccurredAt,
 		Status:      string(transaction.Status),
 		Tags:        transaction.Tags,
-		Notes:       transaction.Notes,
+		Notes:       notesValue,
 	}, nil
 }
 
-func (uc *TransactionUseCase) ListTransactions(ctx context.Context, userID string, from, to time.Time) ([]*dto.TransactionResponse, error) {
-	transactions, err := uc.transactionRepo.List(ctx, userID, from, to)
+func (uc *TransactionUseCase) ListTransactions(ctx context.Context, userID string, from, to time.Time, limit int64, offset int64) ([]*dto.TransactionResponse, error) {
+	transactions, err := uc.transactionRepo.List(ctx, userID, from, to, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -187,6 +260,11 @@ func (uc *TransactionUseCase) ListTransactions(ctx context.Context, userID strin
 			}
 		}
 
+		notesValue, notesErr := uc.decryptNotes(transaction.Notes, transaction.Metadata)
+		if notesErr != nil {
+			return nil, notesErr
+		}
+
 		response = append(response, &dto.TransactionResponse{
 			ID:          transaction.ID,
 			AccountID:   transaction.AccountID,
@@ -197,7 +275,7 @@ func (uc *TransactionUseCase) ListTransactions(ctx context.Context, userID strin
 			OccurredAt:  transaction.OccurredAt,
 			Status:      string(transaction.Status),
 			Tags:        transaction.Tags,
-			Notes:       transaction.Notes,
+			Notes:       notesValue,
 			ReceiptURL:  receiptURL,
 		})
 	}
@@ -218,27 +296,43 @@ func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, 
 		return nil, fmt.Errorf("object storage disabled")
 	}
 
-	payload, err := io.ReadAll(data)
+	tempFile, err := os.CreateTemp("", "receipt-*")
 	if err != nil {
 		return nil, err
 	}
-	if len(payload) == 0 {
+	defer func() {
+		tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	limited := &io.LimitedReader{R: data, N: MaxReceiptSizeBytes + 1}
+	written, err := io.Copy(tempFile, limited)
+	if err != nil {
+		return nil, err
+	}
+	if written == 0 {
 		return nil, fmt.Errorf("empty receipt")
 	}
+	if written > MaxReceiptSizeBytes {
+		return nil, errors.ErrPayloadTooLarge
+	}
 
-	encryptedPayload, err := security.EncryptAESGCM(payload, uc.encryptionKey)
-	if err != nil {
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
 	objectKey := fmt.Sprintf("users/%s/transactions/%s/%s", userID, transactionID, filename)
-	if _, err := uc.storage.Upload(ctx, objectKey, bytes.NewReader(encryptedPayload), contentType); err != nil {
+	if _, err := uc.storage.Upload(ctx, objectKey, tempFile, contentType); err != nil {
 		return nil, err
 	}
 	transaction.ReceiptObject = &objectKey
 	transaction.UpdatedAt = time.Now().UTC()
 
 	if err := uc.transactionRepo.Update(ctx, transaction); err != nil {
+		return nil, err
+	}
+	notesValue, err := uc.decryptNotes(transaction.Notes, transaction.Metadata)
+	if err != nil {
 		return nil, err
 	}
 
@@ -257,7 +351,7 @@ func (uc *TransactionUseCase) AttachReceipt(ctx context.Context, userID string, 
 		OccurredAt:  transaction.OccurredAt,
 		Status:      string(transaction.Status),
 		Tags:        transaction.Tags,
-		Notes:       transaction.Notes,
+		Notes:       notesValue,
 	}
 	response.ReceiptURL = &url
 
