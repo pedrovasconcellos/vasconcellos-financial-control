@@ -9,6 +9,7 @@ import (
 
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/usecase"
+	_ "github.com/vasconcellos/financial-control/internal/domain/dto"
 )
 
 type ReportHandler struct {
@@ -19,6 +20,17 @@ func NewReportHandler(reportUseCase *usecase.ReportUseCase) *ReportHandler {
 	return &ReportHandler{reportUseCase: reportUseCase}
 }
 
+// Summary
+// @Summary Get financial summary
+// @Description Gera um resumo financeiro com receitas, despesas e saldo do período
+// @Tags reports
+// @Produce json
+// @Security BearerAuth
+// @Param from query string false "Data inicial (RFC3339, default: 30 dias atrás)"
+// @Param to query string false "Data final (RFC3339, default: hoje)"
+// @Success 200 {object} dto.SummaryReportResponse "Resumo financeiro"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Router /reports/summary [get]
 func (h *ReportHandler) Summary(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)

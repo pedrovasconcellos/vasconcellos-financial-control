@@ -8,6 +8,12 @@ import (
 	domainErrors "github.com/vasconcellos/financial-control/internal/domain/errors"
 )
 
+// ErrorResponse representa uma resposta de erro padrão da API
+// @Description Standard error response structure
+type ErrorResponse struct {
+	Error string `json:"error" example:"error message"`
+}
+
 func respondError(c *gin.Context, err error) {
 	switch err {
 	case nil:

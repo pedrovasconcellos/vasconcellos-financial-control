@@ -20,6 +20,18 @@ func NewAuthHandler(authUseCase *usecase.AuthUseCase) *AuthHandler {
 	return &AuthHandler{authUseCase: authUseCase}
 }
 
+// Login
+// @Summary Authenticate user
+// @Description Autentica um usuário e retorna tokens de acesso
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Credenciais de login"
+// @Success 200 {object} dto.LoginResponse "Tokens de autenticação"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Credenciais inválidas"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 

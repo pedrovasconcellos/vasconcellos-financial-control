@@ -57,6 +57,10 @@ func TestTransactionUseCaseRecordTransactionDespesa(t *testing.T) {
 	if len(accountRepo.adjustments) != 1 || accountRepo.adjustments[0] != -100 {
 		t.Fatalf("ajuste de saldo inadequado: %#v", accountRepo.adjustments)
 	}
+
+	// Wait a bit for async goroutine to execute
+	time.Sleep(50 * time.Millisecond)
+
 	if !queue.called {
 		t.Fatalf("publicação no SQS deveria ocorrer")
 	}

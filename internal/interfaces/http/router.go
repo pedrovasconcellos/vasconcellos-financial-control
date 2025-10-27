@@ -5,6 +5,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/handler"
@@ -47,6 +49,9 @@ func NewRouter(params RouterParams) *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	// Swagger documentation endpoint (open, no auth required)
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := engine.Group("/api")
 	{

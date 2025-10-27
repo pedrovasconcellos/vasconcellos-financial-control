@@ -19,6 +19,19 @@ func NewAccountHandler(accountUseCase *usecase.AccountUseCase) *AccountHandler {
 	return &AccountHandler{accountUseCase: accountUseCase}
 }
 
+// Create
+// @Summary Create a new account
+// @Description Cria uma nova conta bancária para o usuário autenticado
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateAccountRequest true "Dados da conta"
+// @Success 201 {object} dto.AccountResponse "Conta criada com sucesso"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /accounts [post]
 func (h *AccountHandler) Create(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -47,6 +60,20 @@ func (h *AccountHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// Update
+// @Summary Update an account
+// @Description Atualiza uma conta existente
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "ID da conta"
+// @Param request body dto.UpdateAccountRequest true "Dados atualizados"
+// @Success 200 {object} dto.AccountResponse "Conta atualizada"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 404 {object} ErrorResponse "Conta não encontrada"
+// @Router /accounts/{id} [patch]
 func (h *AccountHandler) Update(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -75,6 +102,19 @@ func (h *AccountHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// List
+// @Summary List accounts
+// @Description Lista todas as contas do usuário autenticado
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Número máximo de resultados (default: 100, max: 200)"
+// @Param offset query int false "Número de resultados para pular (default: 0)"
+// @Success 200 {array} dto.AccountResponse "Lista de contas"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /accounts [get]
 func (h *AccountHandler) List(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -101,6 +141,18 @@ func (h *AccountHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// Delete
+// @Summary Delete an account
+// @Description Remove uma conta existente
+// @Tags accounts
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "ID da conta"
+// @Success 204 "Conta removida com sucesso"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 404 {object} ErrorResponse "Conta não encontrada"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /accounts/{id} [delete]
 func (h *AccountHandler) Delete(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)

@@ -19,6 +19,18 @@ func NewBudgetHandler(budgetUseCase *usecase.BudgetUseCase) *BudgetHandler {
 	return &BudgetHandler{budgetUseCase: budgetUseCase}
 }
 
+// Create
+// @Summary Create a budget
+// @Description Cria um orçamento para controlar gastos por categoria
+// @Tags budgets
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateBudgetRequest true "Dados do orçamento"
+// @Success 201 {object} dto.BudgetResponse "Orçamento criado"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Router /budgets [post]
 func (h *BudgetHandler) Create(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -47,6 +59,15 @@ func (h *BudgetHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// List
+// @Summary List budgets
+// @Description Lista todos os orçamentos do usuário com status atualizado
+// @Tags budgets
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} dto.BudgetResponse "Lista de orçamentos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Router /budgets [get]
 func (h *BudgetHandler) List(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)

@@ -15,6 +15,7 @@ func NewHealthHandler() *HealthHandler {
 }
 
 // HealthResponse representa a resposta do endpoint de health
+// @Description Health check response with service status and uptime
 type HealthResponse struct {
 	Status    string            `json:"status"`
 	Message   string            `json:"message"`
@@ -27,6 +28,13 @@ type HealthResponse struct {
 
 var startTime = time.Now()
 
+// Status
+// @Summary Health check
+// @Description Retorna o status da API, uptime e status dos serviços
+// @Tags health
+// @Produce json
+// @Success 200 {object} HealthResponse "API saudável"
+// @Router /health [get]
 func (h *HealthHandler) Status(c *gin.Context) {
 	uptime := time.Since(startTime)
 

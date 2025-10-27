@@ -21,6 +21,19 @@ func NewTransactionHandler(transactionUseCase *usecase.TransactionUseCase) *Tran
 	return &TransactionHandler{transactionUseCase: transactionUseCase}
 }
 
+// Create
+// @Summary Create a new transaction
+// @Description Cria uma nova transação financeira e publica evento para processamento assíncrono de budgets
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateTransactionRequest true "Dados da transação"
+// @Success 201 {object} dto.TransactionResponse "Transação criada com sucesso"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /transactions [post]
 func (h *TransactionHandler) Create(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -61,6 +74,20 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// Update
+// @Summary Update a transaction
+// @Description Atualiza uma transação existente
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "ID da transação"
+// @Param request body dto.UpdateTransactionRequest true "Dados atualizados"
+// @Success 200 {object} dto.TransactionResponse "Transação atualizada"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 404 {object} ErrorResponse "Transação não encontrada"
+// @Router /transactions/{id} [patch]
 func (h *TransactionHandler) Update(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -89,6 +116,21 @@ func (h *TransactionHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// List
+// @Summary List transactions
+// @Description Lista transações do usuário com filtros opcionais de data e paginação
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param from query string false "Data inicial (ISO 8601)"
+// @Param to query string false "Data final (ISO 8601)"
+// @Param limit query int false "Número máximo de resultados (default: 100, max: 200)"
+// @Param offset query int false "Número de resultados para pular (default: 0)"
+// @Success 200 {array} dto.TransactionResponse "Lista de transações"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /transactions [get]
 func (h *TransactionHandler) List(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -116,6 +158,21 @@ func (h *TransactionHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// AttachReceipt
+// @Summary Attach receipt to transaction
+// @Description Envia e criptografa um recibo para a transação. Arquivo é armazenado no S3 com AES-256
+// @Tags transactions
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "ID da transação"
+// @Param file formData file true "Arquivo do recibo (PDF, PNG, JPG - max 5MB)"
+// @Success 200 {object} dto.TransactionResponse "Recibo anexado com sucesso"
+// @Failure 400 {object} ErrorResponse "Arquivo inválido ou muito grande"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Failure 404 {object} ErrorResponse "Transação não encontrada"
+// @Failure 500 {object} ErrorResponse "Erro interno"
+// @Router /transactions/{id}/receipt [post]
 func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -137,7 +194,7 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 	const maxReceiptSizeBytes = usecase.MaxReceiptSizeBytes
 	if file.Size > 0 && file.Size > maxReceiptSizeBytes {
 		log.Warn("receipt exceeds size limit", zap.Int64("size", file.Size), zap.Int64("limit_bytes", maxReceiptSizeBytes))
-    c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
 		return
 	}
 
@@ -160,7 +217,7 @@ func (h *TransactionHandler) AttachReceipt(c *gin.Context) {
 	if err != nil {
 		if err == domainErrors.ErrPayloadTooLarge {
 			log.Warn("receipt exceeds size limit during processing", zap.String("transaction_id", transactionID), zap.Int64("limit_bytes", maxReceiptSizeBytes))
-            c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
 			return
 		}
 		log.Error("failed to attach receipt", zap.Error(err))

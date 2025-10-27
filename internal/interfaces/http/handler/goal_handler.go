@@ -19,6 +19,18 @@ func NewGoalHandler(goalUseCase *usecase.GoalUseCase) *GoalHandler {
 	return &GoalHandler{goalUseCase: goalUseCase}
 }
 
+// Create
+// @Summary Create a financial goal
+// @Description Cria uma nova meta financeira (ex: guardar R$ 10.000)
+// @Tags goals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateGoalRequest true "Dados da meta"
+// @Success 201 {object} dto.GoalResponse "Meta criada"
+// @Failure 400 {object} ErrorResponse "Dados inválidos"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Router /goals [post]
 func (h *GoalHandler) Create(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)
@@ -47,6 +59,18 @@ func (h *GoalHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// List
+// @Summary List goals
+// @Description Lista todas as metas financeiras do usuário
+// @Tags goals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Número máximo de resultados"
+// @Param offset query int false "Offset para paginação"
+// @Success 200 {array} dto.GoalResponse "Lista de metas"
+// @Failure 401 {object} ErrorResponse "Não autenticado"
+// @Router /goals [get]
 func (h *GoalHandler) List(c *gin.Context) {
 	log := middleware.LoggerFromContext(c)
 	user, ok := middleware.GetUserContext(c)

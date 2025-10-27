@@ -152,24 +152,27 @@ func (uc *TransactionUseCase) RecordTransaction(ctx context.Context, userID stri
 	}
 
 	if uc.queuePublisher != nil && uc.eventQueueName != "" {
-		messagePayload := map[string]any{
-			"transactionId": transaction.ID,
-			"userId":        transaction.UserID,
-			"occurredAt":    transaction.OccurredAt,
-			"amount":        transaction.Amount,
-			"currency":      transaction.Currency.String(),
-			"categoryId":    transaction.CategoryID,
-			"accountId":     transaction.AccountID,
-			"type":          category.Type,
-		}
-		body, marshalErr := json.Marshal(messagePayload)
-		if marshalErr == nil {
-			_ = uc.queuePublisher.Publish(ctx, uc.eventQueueName, port.QueueMessage{
-				ID:         transaction.ID,
-				Payload:    body,
-				Attributes: map[string]string{"eventType": "TRANSACTION_RECORDED"},
-			})
-		}
+		// Publish to SQS asynchronously to avoid blocking HTTP response
+		go func() {
+			messagePayload := map[string]any{
+				"transactionId": transaction.ID,
+				"userId":        transaction.UserID,
+				"occurredAt":    transaction.OccurredAt,
+				"amount":        transaction.Amount,
+				"currency":      transaction.Currency.String(),
+				"categoryId":    transaction.CategoryID,
+				"accountId":     transaction.AccountID,
+				"type":          category.Type,
+			}
+			body, marshalErr := json.Marshal(messagePayload)
+			if marshalErr == nil {
+				_ = uc.queuePublisher.Publish(context.Background(), uc.eventQueueName, port.QueueMessage{
+					ID:         transaction.ID,
+					Payload:    body,
+					Attributes: map[string]string{"eventType": "TRANSACTION_RECORDED"},
+				})
+			}
+		}()
 	}
 
 	return &dto.TransactionResponse{
