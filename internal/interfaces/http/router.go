@@ -51,7 +51,7 @@ func NewRouter(params RouterParams) *gin.Engine {
 	}))
 
 	// Swagger documentation endpoint (open, no auth required)
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
 	api := engine.Group("/api")
 	{

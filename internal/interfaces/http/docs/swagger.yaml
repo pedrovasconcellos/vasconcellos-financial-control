@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   github_com_vasconcellos_financial-control_internal_domain_dto.AccountResponse:
     properties:
@@ -338,8 +339,18 @@ definitions:
       version:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@financialcontrol.com
+    name: API Support
+  description: API REST completa para controle financeiro pessoal. Gerencia contas,
+    categorias, transações, orçamentos e metas financeiras.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Financial Control API
+  version: "1.0"
 paths:
   /accounts:
     get:
@@ -916,4 +927,13 @@ paths:
       summary: Attach receipt to transaction
       tags:
       - transactions
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Use format: Bearer {your_token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -1,10 +1,24 @@
+// @title Financial Control API
+// @version 1.0
+// @description API REST completa para controle financeiro pessoal. Gerencia contas, categorias, transações, orçamentos e metas financeiras.
+// @contact.name API Support
+// @contact.email support@financialcontrol.com
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Use format: Bearer {your_token}
 package main
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	stdhttp "net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,7 +37,8 @@ import (
 	"github.com/vasconcellos/financial-control/internal/infrastructure/logger"
 	"github.com/vasconcellos/financial-control/internal/infrastructure/mongodb"
 	"github.com/vasconcellos/financial-control/internal/infrastructure/security"
-	interfacesHTTP "github.com/vasconcellos/financial-control/internal/interfaces/http"
+	"github.com/vasconcellos/financial-control/internal/interfaces/http"
+	_ "github.com/vasconcellos/financial-control/internal/interfaces/http/docs"
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/handler"
 	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/usecase"
@@ -111,7 +126,7 @@ func main() {
 	healthHandler := handler.NewHealthHandler()
 
 	authMiddleware := middleware.NewAuthMiddleware(authUseCase, userUseCase)
-	router := interfacesHTTP.NewRouter(interfacesHTTP.RouterParams{
+	router := http.NewRouter(http.RouterParams{
 		AuthHandler:        authHandler,
 		AccountHandler:     accountHandler,
 		CategoryHandler:    categoryHandler,
@@ -127,7 +142,7 @@ func main() {
 		Environment:        cfg.App.Environment,
 	})
 
-	server := &http.Server{
+	server := &stdhttp.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.App.Port),
 		Handler:           router,
 		ReadHeaderTimeout: 15 * time.Second,
@@ -144,12 +159,12 @@ func main() {
 			logr.Info("starting HTTPS server",
 				zap.String("certFile", cfg.App.HTTPS.CertFile),
 				zap.String("keyFile", cfg.App.HTTPS.KeyFile))
-			if err := server.ListenAndServeTLS(cfg.App.HTTPS.CertFile, cfg.App.HTTPS.KeyFile); err != nil && err != http.ErrServerClosed {
+			if err := server.ListenAndServeTLS(cfg.App.HTTPS.CertFile, cfg.App.HTTPS.KeyFile); err != nil && err != stdhttp.ErrServerClosed {
 				logr.Fatal("HTTPS server failure", zap.Error(err))
 			}
 		} else {
 			// Usar HTTP
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := server.ListenAndServe(); err != nil && err != stdhttp.ErrServerClosed {
 				logr.Fatal("HTTP server failure", zap.Error(err))
 			}
 		}
