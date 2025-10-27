@@ -30,6 +30,7 @@ WORKDIR /app
 COPY --from=builder /workspace/bin/api /app/api
 COPY --from=builder /workspace/bin/healthcheck /app/healthcheck
 COPY config /app/config
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY certs /app/certs
 
 ENV CONFIG_FILE=/app/config/local_credentials.yaml
