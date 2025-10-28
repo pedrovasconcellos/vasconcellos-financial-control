@@ -3,16 +3,16 @@
 COMPOSE ?= docker compose
 
 api-build:
-	go build ./cmd/api
+	go build ./src/cmd/api
 
 api-test:
 	go test ./...
 
 lambda-build:
-	cd cmd/lambdas/transaction_processor && GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor
+	cd src/cmd/lambdas/transaction_processor && GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor
 
 frontend-build:
-	cd frontend && npm ci && npm run build
+	cd src/frontend && npm ci && npm run build
 
 docker-up:
 	$(COMPOSE) up --build --remove-orphans
@@ -27,4 +27,4 @@ docker-logs:
 	$(COMPOSE) logs -f api frontend localstack mongo
 
 fmt:
-	gofmt -w ./cmd ./internal
+	gofmt -w ./src/cmd ./src/internal

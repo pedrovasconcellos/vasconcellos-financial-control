@@ -6,7 +6,7 @@
   - `internal/domain`: entidades de negócio, interfaces de repositório e portas para serviços externos.
   - `internal/usecase`: orquestração de regras de negócio sem depender de detalhes de infraestrutura.
   - `internal/infrastructure`: adaptadores para MongoDB, AWS (Cognito, S3, SQS), autenticação e logger.
-  - `internal/interfaces/http`: entrega HTTP construída com Gin, incluindo middleware de autenticação.
+  - `internal/adapters/http`: entrega HTTP construída com Gin, incluindo middleware de autenticação.
 - O serviço HTTP principal está em `cmd/api/main.go`. Toda construção de dependências acontece ali, mantendo os módulos injetáveis.
 - A lambda (`cmd/lambdas/transaction_processor`) reutiliza os mesmos repositórios e configurações do backend, garantindo consistência e evitando duplicação de lógica.
 

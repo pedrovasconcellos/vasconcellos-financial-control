@@ -1,0 +1,939 @@
+basePath: /api/v1
+definitions:
+  github_com_vasconcellos_financial-control_internal_domain_dto.AccountResponse:
+    properties:
+      balance:
+        type: number
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.BudgetResponse:
+    properties:
+      alertPercent:
+        type: number
+      amount:
+        type: number
+      categoryId:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      period:
+        type: string
+      periodEnd:
+        type: string
+      periodStart:
+        type: string
+      spent:
+        type: number
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CategoryResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: string
+      type:
+        type: string
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CreateAccountRequest:
+    properties:
+      balance:
+        type: number
+      currency:
+        enum:
+        - USD
+        - EUR
+        - CHF
+        - GBP
+        - BRL
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        enum:
+        - checking
+        - savings
+        - credit
+        - cash
+        type: string
+    required:
+    - currency
+    - name
+    - type
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CreateBudgetRequest:
+    properties:
+      alertPercent:
+        type: number
+      amount:
+        type: number
+      categoryId:
+        type: string
+      currency:
+        enum:
+        - USD
+        - EUR
+        - CHF
+        - GBP
+        - BRL
+        type: string
+      period:
+        enum:
+        - monthly
+        - quarterly
+        - yearly
+        type: string
+      periodEnd:
+        type: string
+      periodStart:
+        type: string
+    required:
+    - alertPercent
+    - amount
+    - categoryId
+    - currency
+    - period
+    - periodEnd
+    - periodStart
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CreateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: string
+      type:
+        enum:
+        - income
+        - expense
+        type: string
+    required:
+    - name
+    - type
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CreateGoalRequest:
+    properties:
+      currency:
+        enum:
+        - USD
+        - EUR
+        - CHF
+        - GBP
+        - BRL
+        type: string
+      deadline:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      targetAmount:
+        type: number
+    required:
+    - currency
+    - deadline
+    - name
+    - targetAmount
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.CreateTransactionRequest:
+    properties:
+      accountId:
+        type: string
+      amount:
+        type: number
+      categoryId:
+        type: string
+      currency:
+        enum:
+        - USD
+        - EUR
+        - CHF
+        - GBP
+        - BRL
+        type: string
+      description:
+        type: string
+      notes:
+        type: string
+      occurredAt:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - accountId
+    - amount
+    - categoryId
+    - currency
+    - occurredAt
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.GoalResponse:
+    properties:
+      currency:
+        type: string
+      currentAmount:
+        type: number
+      deadline:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      targetAmount:
+        type: number
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.LoginRequest:
+    properties:
+      password:
+        minLength: 8
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+      idToken:
+        type: string
+      refreshToken:
+        type: string
+      tokenType:
+        type: string
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.SummaryReportResponse:
+    properties:
+      budgetUsage:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      goalProgress:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      netBalance:
+        type: number
+      spendingByCategory:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      totalExpense:
+        type: number
+      totalIncome:
+        type: number
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.TransactionResponse:
+    properties:
+      accountId:
+        type: string
+      amount:
+        type: number
+      categoryId:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      occurredAt:
+        type: string
+      receiptUrl:
+        type: string
+      status:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.UpdateAccountRequest:
+    properties:
+      currency:
+        enum:
+        - USD
+        - EUR
+        - CHF
+        - GBP
+        - BRL
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  github_com_vasconcellos_financial-control_internal_domain_dto.UpdateTransactionRequest:
+    properties:
+      categoryId:
+        type: string
+      description:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_interfaces_http_handler.ErrorResponse:
+    description: Standard error response structure
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  internal_interfaces_http_handler.HealthResponse:
+    description: Health check response with service status and uptime
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+      service:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+      uptime:
+        type: string
+      version:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@financialcontrol.com
+    name: API Support
+  description: API REST completa para controle financeiro pessoal. Gerencia contas,
+    categorias, transações, orçamentos e metas financeiras.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Financial Control API
+  version: "1.0"
+paths:
+  /accounts:
+    get:
+      consumes:
+      - application/json
+      description: Lista todas as contas do usuário autenticado
+      parameters:
+      - description: 'Número máximo de resultados (default: 100, max: 200)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Número de resultados para pular (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de contas
+          schema:
+            items:
+              $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.AccountResponse'
+            type: array
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List accounts
+      tags:
+      - accounts
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova conta bancária para o usuário autenticado
+      parameters:
+      - description: Dados da conta
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Conta criada com sucesso
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.AccountResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new account
+      tags:
+      - accounts
+  /accounts/{id}:
+    delete:
+      description: Remove uma conta existente
+      parameters:
+      - description: ID da conta
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Conta removida com sucesso
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "404":
+          description: Conta não encontrada
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an account
+      tags:
+      - accounts
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza uma conta existente
+      parameters:
+      - description: ID da conta
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.UpdateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conta atualizada
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.AccountResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "404":
+          description: Conta não encontrada
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an account
+      tags:
+      - accounts
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica um usuário e retorna tokens de acesso
+      parameters:
+      - description: Credenciais de login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens de autenticação
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.LoginResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Credenciais inválidas
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      summary: Authenticate user
+      tags:
+      - auth
+  /budgets:
+    get:
+      description: Lista todos os orçamentos do usuário com status atualizado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de orçamentos
+          schema:
+            items:
+              $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.BudgetResponse'
+            type: array
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List budgets
+      tags:
+      - budgets
+    post:
+      consumes:
+      - application/json
+      description: Cria um orçamento para controlar gastos por categoria
+      parameters:
+      - description: Dados do orçamento
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CreateBudgetRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Orçamento criado
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.BudgetResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a budget
+      tags:
+      - budgets
+  /categories:
+    get:
+      description: Lista todas as categorias do usuário
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de categorias
+          schema:
+            items:
+              $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CategoryResponse'
+            type: array
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova categoria de transação (income ou expense)
+      parameters:
+      - description: Dados da categoria
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Categoria criada
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CategoryResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      description: Remove uma categoria
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Categoria removida
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "404":
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a category
+      tags:
+      - categories
+  /goals:
+    get:
+      consumes:
+      - application/json
+      description: Lista todas as metas financeiras do usuário
+      parameters:
+      - description: Número máximo de resultados
+        in: query
+        name: limit
+        type: integer
+      - description: Offset para paginação
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de metas
+          schema:
+            items:
+              $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.GoalResponse'
+            type: array
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List goals
+      tags:
+      - goals
+    post:
+      consumes:
+      - application/json
+      description: 'Cria uma nova meta financeira (ex: guardar R$ 10.000)'
+      parameters:
+      - description: Dados da meta
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CreateGoalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Meta criada
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.GoalResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a financial goal
+      tags:
+      - goals
+  /health:
+    get:
+      description: Retorna o status da API, uptime e status dos serviços
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API saudável
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.HealthResponse'
+      summary: Health check
+      tags:
+      - health
+  /reports/summary:
+    get:
+      description: Gera um resumo financeiro com receitas, despesas e saldo do período
+      parameters:
+      - description: 'Data inicial (RFC3339, default: 30 dias atrás)'
+        in: query
+        name: from
+        type: string
+      - description: 'Data final (RFC3339, default: hoje)'
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resumo financeiro
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.SummaryReportResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get financial summary
+      tags:
+      - reports
+  /transactions:
+    get:
+      consumes:
+      - application/json
+      description: Lista transações do usuário com filtros opcionais de data e paginação
+      parameters:
+      - description: Data inicial (ISO 8601)
+        in: query
+        name: from
+        type: string
+      - description: Data final (ISO 8601)
+        in: query
+        name: to
+        type: string
+      - description: 'Número máximo de resultados (default: 100, max: 200)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Número de resultados para pular (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de transações
+          schema:
+            items:
+              $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.TransactionResponse'
+            type: array
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova transação financeira e publica evento para processamento
+        assíncrono de budgets
+      parameters:
+      - description: Dados da transação
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.CreateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Transação criada com sucesso
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.TransactionResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new transaction
+      tags:
+      - transactions
+  /transactions/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza uma transação existente
+      parameters:
+      - description: ID da transação
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.UpdateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transação atualizada
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.TransactionResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "404":
+          description: Transação não encontrada
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a transaction
+      tags:
+      - transactions
+  /transactions/{id}/receipt:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Envia e criptografa um recibo para a transação. Arquivo é armazenado
+        no S3 com AES-256
+      parameters:
+      - description: ID da transação
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Arquivo do recibo (PDF, PNG, JPG - max 5MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recibo anexado com sucesso
+          schema:
+            $ref: '#/definitions/github_com_vasconcellos_financial-control_internal_domain_dto.TransactionResponse'
+        "400":
+          description: Arquivo inválido ou muito grande
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "401":
+          description: Não autenticado
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "404":
+          description: Transação não encontrada
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+        "500":
+          description: Erro interno
+          schema:
+            $ref: '#/definitions/internal_interfaces_http_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Attach receipt to transaction
+      tags:
+      - transactions
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Use format: Bearer {your_token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

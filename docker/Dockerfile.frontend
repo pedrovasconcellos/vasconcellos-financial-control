@@ -6,10 +6,10 @@ WORKDIR /app
 ARG VITE_API_URL=http://localhost:8080/api/v1
 ENV VITE_API_URL=${VITE_API_URL}
 
-COPY frontend/package.json frontend/package-lock.json* ./
+COPY src/frontend/package.json src/frontend/package-lock.json* ./
 RUN npm ci
 
-COPY frontend/ .
+COPY src/frontend/ .
 RUN npm run build
 
 FROM --platform=$TARGETPLATFORM nginx:1.27-alpine
