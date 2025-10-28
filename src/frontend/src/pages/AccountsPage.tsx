@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 import { api } from '../services/api';
 import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
+import CurrencyInput from '../components/CurrencyInput';
 
 interface Account {
   id: string;
@@ -247,13 +248,11 @@ const AccountsPage = () => {
               </TextField>
             </Grid>
             <Grid item xs={12}>
-              <TextField
+              <CurrencyInput
                 label="Initial Balance"
-                type="number"
                 value={form.balance}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, balance: Number(event.target.value) }))
-                }
+                onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))}
+                currency={form.currency}
                 onBlur={validateForm}
                 onFocus={() => setFormErrors((prev) => ({ ...prev, balance: undefined }))}
                 fullWidth

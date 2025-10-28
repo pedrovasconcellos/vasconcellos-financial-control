@@ -25,6 +25,7 @@ import dayjs from 'dayjs';
 
 import { api } from '../services/api';
 import { currencyOptions, defaultCurrency, CurrencyCode } from '../constants/currencyOptions';
+import CurrencyInput from '../components/CurrencyInput';
 
 interface Goal {
   id: string;
@@ -174,13 +175,11 @@ const GoalsPage = () => {
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
+              <CurrencyInput
                 label="Target Amount"
-                type="number"
                 value={form.targetAmount}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, targetAmount: Number(event.target.value) }))
-                }
+                onChange={(value) => setForm((prev) => ({ ...prev, targetAmount: value }))}
+                currency={form.currency}
                 fullWidth
               />
             </Grid>
