@@ -25,10 +25,11 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
 }) => {
   const [displayValue, setDisplayValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const config = currencyConfig[currency];
 
-  // Função para formatar número para exibição
+  // Função para formatar número para exibição (com separadores de milhares)
   const formatForDisplay = (num: number): string => {
     if (isNaN(num) || num === 0) return '';
     
@@ -65,37 +66,12 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     return isNaN(parsed) ? 0 : Math.round(parsed * Math.pow(10, config.decimals)) / Math.pow(10, config.decimals);
   };
 
-  // Função para limpar e preparar valor para digitação
-  const prepareForEditing = (str: string): string => {
+  // Função para formatar valor durante digitação (sem separadores de milhares)
+  const formatForTyping = (str: string): string => {
     if (!str) return '';
     
-    // Remove separadores de milhares mas mantém o separador decimal
-    let cleanStr = str.replace(/[^\d.,]/g, '');
-    
-    if (config.separator === ',') {
-      // Para BRL: remove pontos (milhares) mas mantém vírgula (decimal)
-      cleanStr = cleanStr.replace(/\./g, '');
-    } else {
-      // Para outras moedas: remove vírgulas (milhares) mas mantém ponto (decimal)
-      cleanStr = cleanStr.replace(/,/g, '');
-    }
-    
-    return cleanStr;
-  };
-
-  // Atualiza o valor de exibição quando o valor numérico muda (apenas quando não está focado)
-  useEffect(() => {
-    if (!isFocused) {
-      setDisplayValue(formatForDisplay(value));
-    }
-  }, [value, currency, isFocused]);
-
-  // Função para validar e limitar entrada durante digitação
-  const validateAndLimitInput = (inputValue: string): string => {
-    if (!inputValue) return '';
-    
     // Remove símbolos e espaços
-    let cleanStr = inputValue.replace(/[^\d.,]/g, '');
+    let cleanStr = str.replace(/[^\d.,]/g, '');
     
     // Para BRL (vírgula como separador decimal)
     if (config.separator === ',') {
@@ -105,11 +81,9 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
       // Limita a uma vírgula e máximo 2 dígitos após ela
       const parts = cleanStr.split(',');
       if (parts.length > 2) {
-        // Se há mais de uma vírgula, mantém apenas a primeira
         cleanStr = parts[0] + ',' + parts.slice(1).join('');
       }
       if (parts.length === 2 && parts[1].length > 2) {
-        // Limita a 2 casas decimais
         cleanStr = parts[0] + ',' + parts[1].substring(0, 2);
       }
     } else {
@@ -119,11 +93,9 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
       // Limita a um ponto e máximo 2 dígitos após ele
       const parts = cleanStr.split('.');
       if (parts.length > 2) {
-        // Se há mais de um ponto, mantém apenas o primeiro
         cleanStr = parts[0] + '.' + parts.slice(1).join('');
       }
       if (parts.length === 2 && parts[1].length > 2) {
-        // Limita a 2 casas decimais
         cleanStr = parts[0] + '.' + parts[1].substring(0, 2);
       }
     }
@@ -131,22 +103,60 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     return cleanStr;
   };
 
+  // Função para calcular nova posição do cursor após formatação
+  const calculateCursorPosition = (oldValue: string, newValue: string, oldCursorPos: number): number => {
+    const oldLength = oldValue.length;
+    const newLength = newValue.length;
+    const lengthDiff = newLength - oldLength;
+    
+    // Se o cursor estava no final, mantém no final
+    if (oldCursorPos >= oldLength) {
+      return newLength;
+    }
+    
+    // Ajusta a posição baseado na diferença de tamanho
+    return Math.max(0, Math.min(newLength, oldCursorPos + lengthDiff));
+  };
+
+  // Atualiza o valor de exibição quando o valor numérico muda (apenas quando não está focado)
+  useEffect(() => {
+    if (!isFocused) {
+      setDisplayValue(formatForDisplay(value));
+    }
+  }, [value, currency, isFocused]);
+
+  // Atualiza posição do cursor após mudança no displayValue
+  useEffect(() => {
+    if (inputRef.current && isFocused) {
+      const input = inputRef.current.querySelector('input');
+      if (input) {
+        input.setSelectionRange(cursorPosition, cursorPosition);
+      }
+    }
+  }, [displayValue, cursorPosition, isFocused]);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
+    const cursorPos = event.target.selectionStart || 0;
     
-    // Valida e limita a entrada durante digitação
-    const validatedValue = validateAndLimitInput(inputValue);
-    setDisplayValue(validatedValue);
+    // Formata o valor durante digitação (sem separadores de milhares)
+    const formattedValue = formatForTyping(inputValue);
+    
+    // Calcula nova posição do cursor
+    const newCursorPos = calculateCursorPosition(inputValue, formattedValue, cursorPos);
+    
+    setDisplayValue(formattedValue);
+    setCursorPosition(newCursorPos);
     
     // Converte para número e chama onChange
-    const numericValue = parseFromDisplay(validatedValue);
+    const numericValue = parseFromDisplay(formattedValue);
     onChange(numericValue);
   };
 
   const handleBlur = () => {
     setIsFocused(false);
     
-    // Formata o valor quando o campo perde o foco
+    // Formata o valor com separadores de milhares quando perde o foco
     const numericValue = parseFromDisplay(displayValue);
     setDisplayValue(formatForDisplay(numericValue));
     onChange(numericValue);
@@ -155,12 +165,16 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const handleFocus = () => {
     setIsFocused(true);
     
-    // Quando ganha foco, prepara o valor para edição
+    // Quando ganha foco, prepara o valor para edição (sem separadores de milhares)
     if (value === 0) {
       setDisplayValue('');
+      setCursorPosition(0);
     } else {
-      // Remove formatação para facilitar edição
-      setDisplayValue(prepareForEditing(formatForDisplay(value)));
+      // Remove separadores de milhares para facilitar edição
+      const formattedValue = formatForDisplay(value);
+      const cleanValue = formattedValue.replace(new RegExp(`\\${config.thousandSeparator}`, 'g'), '');
+      setDisplayValue(cleanValue);
+      setCursorPosition(cleanValue.length);
     }
   };
 
