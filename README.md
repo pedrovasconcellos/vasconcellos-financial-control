@@ -6,7 +6,7 @@ Financial Control is a personal finance platform built on top of a clean-archite
 
 ## Architecture Highlights
 
-- **Clean architecture backend** – domain entities, repositories, and use cases live under `internal/`; HTTP adapters and infrastructure concerns stay in their own packages.
+- **Clean architecture backend** – domain entities, repositories, and use cases live under `src/internal/`; HTTP adapters and infrastructure concerns stay in their own packages.
 - **Type-safe frontend** – React + TypeScript with Material UI, React Router, and React Query for state and data access.
 - **Asynchronous pipeline** – every recorded transaction emits an SQS message; the Lambda updates budget execution totals.
 - **Secure receipts** – transaction receipts are encrypted with AES-256 and stored in S3; presigned URLs are returned to the UI.
@@ -16,16 +16,17 @@ Financial Control is a personal finance platform built on top of a clean-archite
 
 ```
 .
-├── cmd/
-│   ├── api/                         # HTTP API entrypoint
-│   └── lambdas/
-│       └── transaction_processor/   # AWS Lambda handler
-├── internal/                        # Domain entities, use cases, and adapters
-├── frontend/                        # React application (Vite + Material UI)
-├── config/                          # Configuration templates
+├── src/
+│   ├── cmd/                         # Application entrypoints
+│   │   ├── api/                     # HTTP API entrypoint
+│   │   └── lambdas/
+│   │       └── transaction_processor/   # AWS Lambda handler
+│   ├── internal/                    # Domain entities, use cases, and adapters
+│   ├── frontend/                    # React application (Vite + Material UI)
+│   └── configs/                     # Configuration templates
 ├── scripts/                         # Utilities (LocalStack bootstrap, migrations, seeds)
-├── infra/terraform/                 # Optional AWS provisioning stack
-├── Dockerfile
+├── infra/terraform/                # Optional AWS provisioning stack
+├── docker/                          # Dockerfiles
 ├── docker-compose.yml
 └── Makefile
 ```
@@ -51,7 +52,7 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
 
 1. **Configure credentials**
    ```bash
-   cp config/local_credentials.example.yaml config/local_credentials.yaml
+   cp src/configs/local_credentials.example.yaml src/configs/local_credentials.yaml
    ```
    Generate an encryption key (`openssl rand -base64 32`) and fill `security.encryptionKey`. The sample file already points to the services created by Docker Compose.
 
@@ -69,14 +70,14 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
 3. **Run services manually (optional)**
    ```bash
    # API
-   export CONFIG_FILE=config/local_credentials.yaml
-   go run ./cmd/api
+   export CONFIG_FILE=src/configs/local_credentials.yaml
+   go run ./src/cmd/api
 
    # Lambda build (for local tests)
-   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./cmd/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./src/cmd/lambdas/transaction_processor
 
    # Frontend with hot reload
-   cd frontend
+   cd src/frontend
    npm install
    npm run dev
    ```
@@ -130,14 +131,14 @@ All scripts are written for `mongosh`; pipe them through `mongosh <database> < s
    ```
    Deploy the image to ECS Fargate or EC2 (Systemd). Provide:
    ```
-   CONFIG_FILE=/app/config/config.yaml
+   CONFIG_FILE=/app/src/configs/config.yaml
    APP_ENVIRONMENT=homolog|production
    AWS_REGION=<region>
    ```
 
 3. **Lambda deployment**
    ```bash
-   GOOS=linux GOARCH=amd64 go build -o bootstrap ./cmd/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bootstrap ./src/cmd/lambdas/transaction_processor
    zip lambda.zip bootstrap
    aws lambda update-function-code \
      --function-name financial-transaction-processor \
@@ -151,7 +152,7 @@ All scripts are written for `mongosh`; pipe them through `mongosh <database> < s
    npm install
    npm run build
    ```
-Deploy the contents of `frontend/dist` to S3 + CloudFront or another static hosting solution. Set `VITE_API_URL` (e.g., `https://api.company.com/api/v1`) in the environment prior to building.
+Deploy the contents of `src/frontend/dist` to S3 + CloudFront or another static hosting solution. Set `VITE_API_URL` (e.g., `https://api.company.com/api/v1`) in the environment prior to building.
 
 ## API Endpoints
 
@@ -176,7 +177,7 @@ Deploy the contents of `frontend/dist` to S3 + CloudFront or another static host
 | `AUTH_MODE` | `local` for dev; `cognito` in managed environments. |
 | `security.encryptionKey` | Base64-encoded AES-256 key (must come from a secret in homolog/production). |
 
-Consult `config/local_credentials.example.yaml` for the full schema.
+Consult `src/configs/local_credentials.example.yaml` for the full schema.
 
 ## Terraform Automation (Optional)
 
@@ -196,7 +197,7 @@ Outputs include the ALB DNS name, Cognito identifiers, and the MongoDB private I
 ## Useful Make Targets
 
 ```bash
-make api-build         # go build ./cmd/api
+make api-build         # go build ./src/cmd/api
 make api-run           # run API with CONFIG_FILE pre-set
 make api-test          # go test ./...
 make lambda-build      # build Lambda binary (linux/amd64)
@@ -205,7 +206,7 @@ make frontend-build    # npm install && npm run build
 
 ## Conventions & Further Reading
 
-- Keep domain logic inside `internal/usecase` and `internal/domain`; adapters should remain thin and testable.
+- Keep domain logic inside `src/internal/usecase` and `src/internal/domain`; adapters should remain thin and testable.
 - Comments should be in Portuguese when necessary for context; code remains in English.
 - Document architectural or configuration changes in `PROJECT.md`.
 - Before opening a pull request, run `go test ./...`, `make lambda-build`, and `npm run build`.

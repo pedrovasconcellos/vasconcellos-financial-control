@@ -3,12 +3,12 @@
 ## Arquitetura Geral
 
 - O backend em Go segue Clean Architecture com camadas explícitas:
-  - `internal/domain`: entidades de negócio, interfaces de repositório e portas para serviços externos.
-  - `internal/usecase`: orquestração de regras de negócio sem depender de detalhes de infraestrutura.
-  - `internal/infrastructure`: adaptadores para MongoDB, AWS (Cognito, S3, SQS), autenticação e logger.
-  - `internal/adapters/http`: entrega HTTP construída com Gin, incluindo middleware de autenticação.
-- O serviço HTTP principal está em `cmd/api/main.go`. Toda construção de dependências acontece ali, mantendo os módulos injetáveis.
-- A lambda (`cmd/lambdas/transaction_processor`) reutiliza os mesmos repositórios e configurações do backend, garantindo consistência e evitando duplicação de lógica.
+  - `src/internal/domain`: entidades de negócio, interfaces de repositório e portas para serviços externos.
+  - `src/internal/usecase`: orquestração de regras de negócio sem depender de detalhes de infraestrutura.
+  - `src/internal/infrastructure`: adaptadores para MongoDB, AWS (Cognito, S3, SQS), autenticação e logger.
+  - `src/internal/adapters/http`: entrega HTTP construída com Gin, incluindo middleware de autenticação.
+- O serviço HTTP principal está em `src/cmd/api/main.go`. Toda construção de dependências acontece ali, mantendo os módulos injetáveis.
+- A lambda (`src/cmd/lambdas/transaction_processor`) reutiliza os mesmos repositórios e configurações do backend, garantindo consistência e evitando duplicação de lógica.
 
 ## Persistência e Dados
 
@@ -24,7 +24,7 @@
 
 ## Integração com AWS
 
-- SDK v2 da AWS é utilizado com wrappers finos (`internal/infrastructure/aws`) para S3 (upload/presign), SQS (publicação) e Cognito (autenticação). Informações sensíveis (ex.: `security.encryptionKey`) são injetadas via Secrets Manager/Parameter Store.
+- SDK v2 da AWS é utilizado com wrappers finos (`src/internal/infrastructure/aws`) para S3 (upload/presign), SQS (publicação) e Cognito (autenticação). Informações sensíveis (ex.: `security.encryptionKey`) são injetadas via Secrets Manager/Parameter Store.
 - A configuração suporta LocalStack através de `aws.useLocalstack` e `aws.endpoint`, permitindo rodar tudo localmente sem credenciais reais.
 - SQS recebe eventos de transações para processamento assíncrono. A lambda processa as mensagens de forma idempotente marcando transações processadas na coleção `processed_transactions` antes de atualizar os gastos dos orçamentos, implementando rollback automático em caso de erro.
 - O upload de recibos usa S3 com geração de URL pré-assinada para consumo pelo frontend.
@@ -38,7 +38,7 @@
 ## Configuração
 
 - `CONFIG_FILE` aponta para um YAML com credenciais não sensíveis. Em homologação/produção esse arquivo é materializado via Secrets Manager e a chave AES (`security.encryptionKey`) é lida de um secret dedicado.
-- `config/local_credentials.example.yaml` documenta todas as chaves e serve como ponto de partida para desenvolvimento.
+- `src/configs/local_credentials.example.yaml` documenta todas as chaves e serve como ponto de partida para desenvolvimento.
 - O carregamento com Viper permite mesclar defaults, arquivo e variáveis de ambiente.
 
 ## Frontend
@@ -54,7 +54,7 @@
 - Script `scripts/localstack/00-bootstrap.sh` cria fila (`financial-transactions-queue`), dead-letter queue (`financial-transactions-dlq`), bucket S3 e estrutura Cognito automaticamente.
 - A lambda rodando em modo local (`LAMBDA_LOCAL=true`) faz polling contínuo da fila SQS e processa mensagens de forma idempotente através da coleção `processed_transactions`.
 - Makefile centraliza comandos (`api-build`, `api-test`, `lambda-build`, `frontend-build`).
-- Para rodar localmente sem Docker basta informar `CONFIG_FILE=config/local_credentials.yaml`, subir MongoDB e invocar `go run ./cmd/api`.
+- Para rodar localmente sem Docker basta informar `CONFIG_FILE=src/configs/local_credentials.yaml`, subir MongoDB e invocar `go run ./src/cmd/api`.
 
 ## Validação e Qualidade
 

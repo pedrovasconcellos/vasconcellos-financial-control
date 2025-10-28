@@ -14,26 +14,26 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
 
-COPY internal ./internal
-COPY cmd ./cmd
+COPY src/internal ./src/internal
+COPY src/cmd ./src/cmd
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./cmd/api
+    go build -trimpath -ldflags="-s -w" -o /workspace/bin/api ./src/cmd/api
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -trimpath -ldflags="-s -w" -o /workspace/bin/healthcheck ./cmd/tools/healthcheck
+    go build -trimpath -ldflags="-s -w" -o /workspace/bin/healthcheck ./src/cmd/tools/healthcheck
 
 FROM --platform=$TARGETPLATFORM cgr.dev/chainguard/static:latest AS runtime
 WORKDIR /app
 COPY --from=builder /workspace/bin/api /app/api
 COPY --from=builder /workspace/bin/healthcheck /app/healthcheck
-COPY config /app/config
+COPY src/configs /app/src/configs
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY certs /app/certs
 
-ENV CONFIG_FILE=/app/config/local_credentials.yaml
+ENV CONFIG_FILE=/app/src/configs/local_credentials.yaml
 EXPOSE 8080
 
 ENTRYPOINT ["/app/api"]

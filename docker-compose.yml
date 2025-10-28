@@ -9,7 +9,7 @@ services:
       target: runtime
     image: financial-control-api:dev
     environment:
-      CONFIG_FILE: /app/config/local_credentials.yaml
+      CONFIG_FILE: /app/src/configs/local_credentials.yaml
       APP_ENVIRONMENT: development
       AWS_REGION: us-east-1
     ports:
@@ -20,7 +20,7 @@ services:
       localstack:
         condition: service_healthy
     volumes:
-      - ./config/local_credentials.yaml:/app/config/local_credentials.yaml:ro
+      - ./src/configs/local_credentials.yaml:/app/src/configs/local_credentials.yaml:ro
     networks:
       - app-network
     healthcheck:
@@ -91,9 +91,9 @@ services:
     environment:
       - AWS_REGION=us-east-1
       - LAMBDA_LOCAL=true
-      - CONFIG_FILE=/var/task/config/local_credentials.yaml
+      - CONFIG_FILE=/var/task/src/configs/local_credentials.yaml
     volumes:
-      - ./config/local_credentials.yaml:/var/task/config/local_credentials.yaml:ro
+      - ./src/configs/local_credentials.yaml:/var/task/src/configs/local_credentials.yaml:ro
     depends_on:
       mongo:
         condition: service_healthy
