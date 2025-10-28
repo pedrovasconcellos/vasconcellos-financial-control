@@ -8,7 +8,7 @@ Documento elaborado para orientar evolução contínua do projeto.
 
 ## Segurança e Configuração
 
-- **Arquivos de credenciais**: substituir materialização em disco (`config/*.yaml`) por leitura direta de AWS Secrets Manager/Parameter Store em homolog/produção. Incluir mecanismo de fallback seguro.
+- **Arquivos de credenciais**: substituir materialização em disco (`src/configs/*.yaml`) por leitura direta de AWS Secrets Manager/Parameter Store em homolog/produção. Incluir mecanismo de fallback seguro.
 - **CORS**: restringir `security.allowedOrigins` no ambiente produtivo; adicionar verificação automática (ex.: erro se `*` for usado fora de dev).
 
 ## API e Domínio

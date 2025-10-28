@@ -6,7 +6,7 @@ Financial Control é uma plataforma de finanças pessoais construída sobre um b
 
 ## Destaques da Arquitetura
 
-- **Backend com arquitetura limpa** – entidades de domínio, repositórios e casos de uso vivem em `internal/`; adaptadores HTTP e preocupações de infraestrutura ficam em seus próprios pacotes.
+- **Backend com arquitetura limpa** – entidades de domínio, repositórios e casos de uso vivem em `src/internal/`; adaptadores HTTP e preocupações de infraestrutura ficam em seus próprios pacotes.
 - **Frontend com tipagem segura** – React + TypeScript com Material UI, React Router e React Query para estado e acesso a dados.
 - **Pipeline assíncrono** – cada transação registrada emite uma mensagem SQS; a Lambda atualiza os totais de execução de orçamento.
 - **Recibos seguros** – recibos de transação são criptografados com AES-256 e armazenados no S3; URLs pré-assinadas são retornadas para a UI.
@@ -16,16 +16,17 @@ Financial Control é uma plataforma de finanças pessoais construída sobre um b
 
 ```
 .
-├── cmd/
-│   ├── api/                         # Ponto de entrada da API HTTP
-│   └── lambdas/
-│       └── transaction_processor/   # Handler AWS Lambda
-├── internal/                        # Entidades de domínio, casos de uso e adaptadores
-├── frontend/                        # Aplicação React (Vite + Material UI)
-├── config/                          # Templates de configuração
+├── src/
+│   ├── cmd/                         # Pontos de entrada da aplicação
+│   │   ├── api/                     # Ponto de entrada da API HTTP
+│   │   └── lambdas/
+│   │       └── transaction_processor/   # Handler AWS Lambda
+│   ├── internal/                    # Entidades de domínio, casos de uso e adaptadores
+│   ├── frontend/                    # Aplicação React (Vite + Material UI)
+│   └── configs/                     # Templates de configuração
 ├── scripts/                         # Utilitários (bootstrap LocalStack, migrações, seeds)
-├── infra/terraform/                 # Stack de provisionamento AWS opcional
-├── Dockerfile
+├── infra/terraform/                # Stack de provisionamento AWS opcional
+├── docker/                          # Dockerfiles
 ├── docker-compose.yml
 └── Makefile
 ```
@@ -51,7 +52,7 @@ Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go). Document
 
 1. **Configure as credenciais**
    ```bash
-   cp config/local_credentials.example.yaml config/local_credentials.yaml
+   cp src/configs/local_credentials.example.yaml src/configs/local_credentials.yaml
    ```
    Gere uma chave de criptografia (`openssl rand -base64 32`) e preencha `security.encryptionKey`. O arquivo de exemplo já aponta para os serviços criados pelo Docker Compose.
 
@@ -69,14 +70,14 @@ Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go). Document
 3. **Execute os serviços manualmente (opcional)**
    ```bash
    # API
-   export CONFIG_FILE=config/local_credentials.yaml
-   go run ./cmd/api
+   export CONFIG_FILE=src/configs/local_credentials.yaml
+   go run ./src/cmd/api
 
    # Build da Lambda (para testes locais)
-   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./cmd/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bin/transaction_processor ./src/cmd/lambdas/transaction_processor
 
    # Frontend com hot reload
-   cd frontend
+   cd src/frontend
    npm install
    npm run dev
    ```
@@ -130,14 +131,14 @@ Todos os scripts são escritos para `mongosh`; canalize-os através de `mongosh 
    ```
    Faça o deploy da imagem em ECS Fargate ou EC2 (Systemd). Forneça:
    ```
-   CONFIG_FILE=/app/config/config.yaml
+   CONFIG_FILE=/app/src/configs/config.yaml
    APP_ENVIRONMENT=homolog|production
    AWS_REGION=<region>
    ```
 
 3. **Deploy da Lambda**
    ```bash
-   GOOS=linux GOARCH=amd64 go build -o bootstrap ./cmd/lambdas/transaction_processor
+   GOOS=linux GOARCH=amd64 go build -o bootstrap ./src/cmd/lambdas/transaction_processor
    zip lambda.zip bootstrap
    aws lambda update-function-code \
      --function-name financial-transaction-processor \
@@ -151,7 +152,7 @@ Todos os scripts são escritos para `mongosh`; canalize-os através de `mongosh 
    npm install
    npm run build
    ```
-Faça o deploy do conteúdo de `frontend/dist` para S3 + CloudFront ou outra solução de hospedagem estática. Configure `VITE_API_URL` (ex.: `https://api.company.com/api/v1`) no ambiente antes de fazer o build.
+Faça o deploy do conteúdo de `src/frontend/dist` para S3 + CloudFront ou outra solução de hospedagem estática. Configure `VITE_API_URL` (ex.: `https://api.company.com/api/v1`) no ambiente antes de fazer o build.
 
 ## Endpoints da API
 
@@ -176,7 +177,7 @@ Endpoints `GET` para contas, transações, orçamentos e metas aceitam parâmetr
 | `AUTH_MODE` | `local` para dev; `cognito` em ambientes gerenciados. |
 | `security.encryptionKey` | Chave AES-256 Base64 (deve vir de um secret em homolog/produção). |
 
-Consulte `config/local_credentials.example.yaml` para o schema completo.
+Consulte `src/configs/local_credentials.example.yaml` para o schema completo.
 
 ## Automação Terraform (Opcional)
 
@@ -196,7 +197,7 @@ Os outputs incluem o nome DNS do ALB, identificadores do Cognito e o IP privado 
 ## Targets Úteis do Make
 
 ```bash
-make api-build         # go build ./cmd/api
+make api-build         # go build ./src/cmd/api
 make api-run           # executa API com CONFIG_FILE pré-configurado
 make api-test          # go test ./...
 make lambda-build      # build binary da Lambda (linux/amd64)
@@ -205,7 +206,7 @@ make frontend-build    # npm install && npm run build
 
 ## Convenções e Leitura Adicional
 
-- Mantenha a lógica de domínio dentro de `internal/usecase` e `internal/domain`; adaptadores devem permanecer finos e testáveis.
+- Mantenha a lógica de domínio dentro de `src/internal/usecase` e `src/internal/domain`; adaptadores devem permanecer finos e testáveis.
 - Comentários devem estar em português quando necessário para contexto; código permanece em inglês.
 - Documente mudanças arquiteturais ou de configuração em `PROJECT.md`.
 - Antes de abrir um pull request, execute `go test ./...`, `make lambda-build` e `npm run build`.

@@ -12,7 +12,7 @@ Documento preparado por um arquiteto de software para orientar correções futur
 - **Correção**: Introduzir sessão/transaction no MongoDB ou compensação outbox.
 
 ### CORS excessivamente permissivo
-- **Contexto**: `internal/adapters/http/router.go` permite `AllowOrigins: ["*"]`.  
+- **Contexto**: `src/internal/adapters/http/router.go` permite `AllowOrigins: ["*"]`.  
 - **Risco**: APIs expostas para qualquer origem, facilitando ataques CSRF ou uso indevido em produção.  
 - **Mitigação**: Restringir origens via config.
 
@@ -39,7 +39,7 @@ Documento preparado por um arquiteto de software para orientar correções futur
 ## Segurança e Configuração
 
 ### Configuração sensível em arquivo local sem criptografia
-- **Contexto**: `config/local_credentials.example.yaml` incentiva uso de arquivo plano com credenciais.  
+- **Contexto**: `src/configs/local_credentials.example.yaml` incentiva uso de arquivo plano com credenciais.  
 - **Risco**: Em ambientes reais, arquivo pode vazar.  
 - **Correção**: Integrar com AWS Secrets Manager/Parameter Store ou Vault, documentando processo.
 
