@@ -38,3 +38,15 @@ variable "extra_tags" {
   default     = {}
 }
 
+variable "frontend_domain" {
+  description = "Domínio customizado para o frontend (opcional)"
+  type        = string
+  default     = ""
+}
+
+variable "api_domain" {
+  description = "Domínio da API para configuração do frontend"
+  type        = string
+  default     = ""
+}
+

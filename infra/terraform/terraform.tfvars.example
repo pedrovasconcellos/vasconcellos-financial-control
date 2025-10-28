@@ -16,3 +16,7 @@ extra_tags = {
   Owner       = "vasconcellos"
   CostCenter  = "engineering"
 }
+
+# Frontend configuration (opcional)
+frontend_domain = ""  # Deixe vazio para usar CloudFront default
+api_domain      = ""  # URL da API para configuração do frontend
