@@ -12,7 +12,7 @@ Documento preparado por um arquiteto de software para orientar correções futur
 - **Correção**: Introduzir sessão/transaction no MongoDB ou compensação outbox.
 
 ### CORS excessivamente permissivo
-- **Contexto**: `internal/interfaces/http/router.go` permite `AllowOrigins: ["*"]`.  
+- **Contexto**: `internal/adapters/http/router.go` permite `AllowOrigins: ["*"]`.  
 - **Risco**: APIs expostas para qualquer origem, facilitando ataques CSRF ou uso indevido em produção.  
 - **Mitigação**: Restringir origens via config.
 

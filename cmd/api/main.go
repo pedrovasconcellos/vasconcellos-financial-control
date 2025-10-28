@@ -29,6 +29,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"go.uber.org/zap"
 
+	"github.com/vasconcellos/financial-control/internal/adapters/http"
+	_ "github.com/vasconcellos/financial-control/internal/adapters/http/docs"
+	"github.com/vasconcellos/financial-control/internal/adapters/http/handler"
+	"github.com/vasconcellos/financial-control/internal/adapters/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/config"
 	"github.com/vasconcellos/financial-control/internal/domain/port"
 	"github.com/vasconcellos/financial-control/internal/infrastructure/auth"
@@ -37,10 +41,6 @@ import (
 	"github.com/vasconcellos/financial-control/internal/infrastructure/logger"
 	"github.com/vasconcellos/financial-control/internal/infrastructure/mongodb"
 	"github.com/vasconcellos/financial-control/internal/infrastructure/security"
-	"github.com/vasconcellos/financial-control/internal/interfaces/http"
-	_ "github.com/vasconcellos/financial-control/internal/interfaces/http/docs"
-	"github.com/vasconcellos/financial-control/internal/interfaces/http/handler"
-	"github.com/vasconcellos/financial-control/internal/interfaces/http/middleware"
 	"github.com/vasconcellos/financial-control/internal/usecase"
 )
 
