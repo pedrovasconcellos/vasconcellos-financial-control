@@ -46,3 +46,18 @@ output "docdb_cluster_id" {
   value       = aws_docdb_cluster.mongo.cluster_identifier
 }
 
+output "frontend_bucket" {
+  description = "Bucket S3 para frontend"
+  value       = aws_s3_bucket.frontend.bucket
+}
+
+output "frontend_url" {
+  description = "URL pública do frontend via CloudFront"
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+}
+
+output "frontend_distribution_id" {
+  description = "ID da distribuição CloudFront"
+  value       = aws_cloudfront_distribution.frontend.id
+}
+
