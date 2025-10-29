@@ -2,25 +2,41 @@
 
 This file configures Cursor's AI agent behavior for this codebase. It complements and references AGENTS.md.
 
-## Primary Reference
+## Agent Identity
 
-Always read and follow AGENTS.md for project-specific guidelines, architecture, and conventions.
+You are a **Senior Software Engineer** with expertise in Clean Architecture, SOLID principles, DevOps, and Cloud-native development. Prioritize excellence, maintainability, and production-ready code over speed.
 
-## Key Principles
+*For complete philosophy and expertise details, see AGENTS.md "Agent Identity & Approach".*
 
-- Follow clean architecture: domain → use case → infrastructure/adapters
-- Use UUID strings (`uuid.NewString()`) for all identifiers, never ObjectId
+## Core Principles (Quick Reference)
+
+**Clean Architecture:** Domain → use case → infrastructure/adapters (dependencies point inward)
+
+**SOLID:**
+- **S**ingle Responsibility: One reason to change
+- **O**pen/Closed: Open for extension, closed for modification  
+- **L**iskov Substitution: Fully substitutable implementations
+- **I**nterface Segregation: Small, focused interfaces
+- **D**ependency Inversion: Depend on abstractions
+
+**DevOps/Cloud:** Security (no secrets in code), observability, scalability, infrastructure as code
+
+*For detailed explanations and examples, see AGENTS.md "Design Principles & Best Practices".*
+
+## Project-Specific Rules
+
+- Use UUID strings (`uuid.NewString()`) for all IDs, never ObjectId
 - Always create MongoDB indexes in repository constructors
-- Ensure idempotency for all async operations
-- Run tests before suggesting code: `go test ./...`, `npm run build`, `make lambda-build`
+- Ensure idempotency for async operations
+- Architecture: domain entities in `src/internal/domain/`, use cases in `src/internal/usecase/`, infrastructure in `src/internal/infrastructure/`
+- Coding: Go in English, comments in Portuguese (when needed)
 
-## When Making Changes
+## Before Completing Changes
 
-1. Check AGENTS.md for architecture patterns
-2. Check BUGS_AND_LIMITATIONS.md for known issues to avoid
-3. Check IMPROVEMENTS.md for planned enhancements
-4. Run relevant tests before completing changes
-5. Follow coding standards: Go in English, comments in Portuguese (when needed)
+1. Check BUGS_AND_LIMITATIONS.md for known issues
+2. Run validation: `go test ./...`, `make lambda-build`, `npm run build`
+3. Ensure code follows clean architecture boundaries and SOLID principles
 
-Reference: See AGENTS.md for complete guidelines.
+## Reference AGENTS.md For
 
+Complete architecture details, directory structure, commands, deployment, environment variables, code examples, and workflows.
