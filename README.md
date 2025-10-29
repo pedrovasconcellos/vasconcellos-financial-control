@@ -1,5 +1,11 @@
 # Financial Control Platform
 
+> **For AI agents and developers:**
+> - Agent guidelines: `AGENTS.md` (includes documentation map)
+> - Architecture decisions: `PROJECT.md`
+> - Known issues: `BUGS_AND_LIMITATIONS.md`
+> - Planned improvements: `IMPROVEMENTS.md`
+
 ## Overview
 
 Financial Control is a personal finance platform built on top of a clean-architecture Go backend and a React (Vite + Material UI) frontend. The system persists data in MongoDB, integrates with Amazon S3 and SQS (optionally via LocalStack for local development), relies on Amazon Cognito for authentication, and offloads budget recalculations to a Go-based AWS Lambda that consumes the transaction queue.

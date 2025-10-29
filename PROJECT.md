@@ -1,5 +1,11 @@
 # Decisões Técnicas do Projeto
 
+> **Referências cruzadas:**
+> - Para guidelines de agentes IA: ver `AGENTS.md`
+> - Para bugs e limitações conhecidas: ver `BUGS_AND_LIMITATIONS.md`
+> - Para melhorias planejadas: ver `IMPROVEMENTS.md`
+> - Para configuração do Cursor AI: ver `.cursorrules`
+
 ## Arquitetura Geral
 
 - O backend em Go segue Clean Architecture com camadas explícitas:

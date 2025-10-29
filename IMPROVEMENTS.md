@@ -2,6 +2,11 @@
 
 Documento elaborado para orientar evolução contínua do projeto.
 
+> **Referências cruzadas:**
+> - Para limitações atuais relacionadas: ver `BUGS_AND_LIMITATIONS.md`
+> - Para contexto técnico: ver `PROJECT.md`
+> - Para guidelines de implementação: ver `AGENTS.md`
+
 ## Toolchain e Builds
 
 - **Imagem de produção**: considerar estágio final `scratch` ou `distroless/static` após auditar dependências, reduzindo superfície de ataque. Avaliar uso de `nonroot` para execução.
@@ -9,11 +14,14 @@ Documento elaborado para orientar evolução contínua do projeto.
 ## Segurança e Configuração
 
 - **Arquivos de credenciais**: substituir materialização em disco (`src/configs/*.yaml`) por leitura direta de AWS Secrets Manager/Parameter Store em homolog/produção. Incluir mecanismo de fallback seguro.
+  - **Relacionado**: Ver `BUGS_AND_LIMITATIONS.md` → "Configuração sensível em arquivo local sem criptografia"
 - **CORS**: restringir `security.allowedOrigins` no ambiente produtivo; adicionar verificação automática (ex.: erro se `*` for usado fora de dev).
+  - **Relacionado**: Ver `BUGS_AND_LIMITATIONS.md` → "CORS configurável mas com default permissivo"
 
 ## API e Domínio
 
 - **Consistência transacional**: mover ajustes de saldo e gravação de transações para transações MongoDB (sessões) ou adotar padrão outbox/event sourcing.
+  - **Relacionado**: Ver `BUGS_AND_LIMITATIONS.md` → "Falta de controle transacional nas atualizações de saldo"
 
 ## Lambda e Pipeline Assíncrono
 

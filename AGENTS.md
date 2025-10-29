@@ -4,6 +4,28 @@
 
 This file (`AGENTS.md`) provides essential guidelines and context for AI agents working with this codebase. It serves as the primary reference for understanding the project architecture, conventions, and development practices. Always refer to this file when making changes or additions to ensure consistency with the project's standards.
 
+## Documentation Map (Memory Bank Index)
+
+This project uses a distributed memory bank system. Here's where to find specific information:
+
+| Topic | Primary Location | Secondary References |
+|-------|-----------------|---------------------|
+| **Agent Configuration** | `.cursorrules` | Quick rules for Cursor AI |
+| **Agent Identity & Principles** | `AGENTS.md` (this file) | `.cursorrules` (summary) |
+| **Architecture Decisions** | `PROJECT.md` | `AGENTS.md` → "Repository Overview" |
+| **Known Issues & Bugs** | `BUGS_AND_LIMITATIONS.md` | `AGENTS.md` → "Common Pitfalls" |
+| **Future Improvements** | `IMPROVEMENTS.md` | `PROJECT.md` → "Próximos Passos" |
+| **Infrastructure** | `infra/terraform/README_INFRA.md` | `AGENTS.md` → "Deployment Scripts" |
+| **Project Overview** | `README.md` / `README_PTBR.md` | `AGENTS.md` → "Repository Overview" |
+| **Quick Start** | `README.md` → "Local Development" | `AGENTS.md` → "Quick Setup" |
+
+**When working on this project:**
+- Start with `.cursorrules` for agent behavior
+- Read `AGENTS.md` for complete guidelines
+- Check `PROJECT.md` for architectural context
+- Review `BUGS_AND_LIMITATIONS.md` before making changes
+- Consult `IMPROVEMENTS.md` for planned enhancements
+
 ## Agent Identity & Approach
 
 AI agents working on this codebase should adopt the mindset of a **Senior Software Engineer** with:
@@ -172,16 +194,20 @@ Key directories:
 - **UUID vs ObjectId**: Always use `uuid.NewString()` for new IDs.
 - **Idempotency**: When working with async processing, always check `processed_transactions` collection before processing to avoid duplicates.
 - **LocalStack limitations**: LocalStack doesn't send real emails. Always use `auth.mode=local` for local development.
-- **CORS in production**: Never use `AllowOrigins: ["*"]` outside development. Check `BUGS_AND_LIMITATIONS.md` for known security issues.
-- **Transaction consistency**: Account balance updates and transaction recording should be in the same transaction. See known bugs in `BUGS_AND_LIMITATIONS.md`.
+- **CORS in production**: Never use `AllowOrigins: ["*"]` outside development. See `BUGS_AND_LIMITATIONS.md` → "CORS configurável mas com default permissivo".
+- **Transaction consistency**: Account balance updates and transaction recording should be in the same transaction. See `BUGS_AND_LIMITATIONS.md` → "Falta de controle transacional nas atualizações de saldo" and `IMPROVEMENTS.md` → "Consistência transacional".
+
+**For detailed issues and limitations, refer to `BUGS_AND_LIMITATIONS.md`.**
 
 ## Known Limitations
 
-Refer to `BUGS_AND_LIMITATIONS.md` for detailed list, but key points:
-- MongoDB transactions not fully implemented (balance + transaction may be inconsistent on crash)
-- Frontend token refresh not implemented (expires without renewal)
-- CORS allows all origins in some configurations (security risk)
-- No tracing/metrics (difficult to debug production issues)
+Refer to `BUGS_AND_LIMITATIONS.md` for detailed list with context and mitigation strategies. Key points:
+- MongoDB transactions not fully implemented (balance + transaction may be inconsistent on crash) - See `BUGS_AND_LIMITATIONS.md` → "Falta de controle transacional"
+- Frontend token refresh not implemented (expires without renewal) - See `BUGS_AND_LIMITATIONS.md` → "Armazenamento de tokens sem renovação"
+- CORS allows all origins in some configurations (security risk) - See `BUGS_AND_LIMITATIONS.md` → "CORS configurável mas com default permissivo"
+- No tracing/metrics (difficult to debug production issues) - See `BUGS_AND_LIMITATIONS.md` → "Falta de tracing e métricas"
+
+**See `IMPROVEMENTS.md` for planned enhancements addressing these limitations.**
 
 ## Code Examples
 

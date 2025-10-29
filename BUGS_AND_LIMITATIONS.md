@@ -2,6 +2,12 @@
 
 Documento preparado por um arquiteto de software para orientar correções futuras realizadas por desenvolvedores humanos ou agentes de IA.
 
+> **Referências cruzadas:**
+> - Para melhorias planejadas relacionadas: ver `IMPROVEMENTS.md`
+> - Para contexto arquitetural: ver `PROJECT.md`
+> - Para guidelines de desenvolvimento: ver `AGENTS.md`
+> - Para configuração de CORS e segurança: ver `AGENTS.md` → "Design Principles & Best Practices" → "DevOps & Cloud Best Practices"
+
 ---
 
 ## Back-end (Go)
@@ -10,11 +16,13 @@ Documento preparado por um arquiteto de software para orientar correções futur
 - **Contexto**: `TransactionUseCase.RecordTransaction` ajusta saldo via `AccountRepository.AdjustBalance` e depois grava transação.  
 - **Risco**: Em caso de crash entre as duas operações, saldo e transação ficam inconsistentes.  
 - **Correção**: Introduzir sessão/transaction no MongoDB ou compensação outbox.
+- **Relacionado**: Ver `IMPROVEMENTS.md` → "Consistência transacional" para melhoria planejada.
 
 ### CORS configurável mas com default permissivo
 - **Contexto**: `src/internal/adapters/http/router.go` configura CORS via `params.AllowedOrigins` que vem da configuração. O default em `src/internal/config/config.go` é `["*"]`.  
 - **Risco**: Em produção, se a configuração não restringir origens, APIs ficam expostas para qualquer origem, facilitando ataques CSRF ou uso indevido.  
 - **Mitigação**: Configurar `security.allowedOrigins` no YAML de configuração com origens específicas para produção.
+- **Relacionado**: Ver `IMPROVEMENTS.md` → "CORS" para melhoria planejada e `AGENTS.md` → "Design Principles & Best Practices" → "Security" para boas práticas.
 
 ---
 

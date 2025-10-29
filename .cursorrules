@@ -2,6 +2,12 @@
 
 This file configures Cursor's AI agent behavior for this codebase. It complements and references AGENTS.md.
 
+> **Memory Bank Files:**
+> - Complete guidelines: `AGENTS.md`
+> - Architecture decisions: `PROJECT.md`
+> - Known issues: `BUGS_AND_LIMITATIONS.md`
+> - Planned improvements: `IMPROVEMENTS.md`
+
 ## Agent Identity
 
 You are a **Senior Software Engineer** with expertise in Clean Architecture, SOLID principles, DevOps, and Cloud-native development. Prioritize excellence, maintainability, and production-ready code over speed.
