@@ -55,10 +55,10 @@ This repository hosts a full-stack personal financial platform. When interacting
   - React application lives in `src/frontend/` (Vite + Material UI).
 - **Configuration:** Prefer reading configuration via `src/internal/config.LoadConfig()` which merges environment variables and optional `CONFIG_FILE` YAML. Local development uses `src/configs/local_credentials.yaml` (gitignored) with `auth.mode=local`. **Never commit sensitive values** (encryption keys, AWS credentials); use AWS Secrets Manager in homolog/production.
 - **AWS integrations:** Interact with AWS through the thin wrappers located in `src/internal/infrastructure/aws`. They already handle LocalStack endpoints. For Cognito, rely on the auth providers under `src/internal/infrastructure/auth`.
-- **Storage:** MongoDB repositories reside in `src/internal/infrastructure/mongodb`. When introducing new collections, add indexes in the repository constructors. All collections use **UUID strings** as identifiers (`uuid.NewString()` in Go). The `processed_transactions` collection ensures idempotency in async transaction processing.
-- **Async processing:** Publishing to queues happens through the `port.QueuePublisher` interface. The lambda consumes from the same queue and updates budgets. **Idempotency is critical**: the `processed_transactions` collection prevents duplicate processing. Any new asynchronous feature should follow the same contract and ensure idempotency.
+- **Storage:** MongoDB repositories reside in `src/internal/infrastructure/mongodb`. When introducing new collections, add indexes in the repository constructors. All collections use **UUID strings** as identifiers (`uuid.NewString()` in Go).
+- **Async processing:** Publishing to queues happens through the `port.QueuePublisher` interface. The lambda consumes from the same queue and updates budgets. **Idempotency is critical**: the `processed_transactions` collection ensures duplicate processing prevention. Any new asynchronous feature must implement idempotency (see "Common Pitfalls" for details).
 - **Testing:** Run `go test ./...` for backend code and `npm run build` for the frontend (type-checking). Add unit tests close to the package being tested.
-- **Docker/localstack:** `docker-compose.yml` provisions MongoDB, LocalStack, API, and frontend. Dockerfiles are organized in `docker/` directory (e.g., `Dockerfile.api`, `Dockerfile.frontend`, `Dockerfile.lambda`). LocalStack bootstrapping scripts live in `scripts/localstack` and automatically create S3 buckets, SQS queues with DLQ, and Cognito resources. **Note:** LocalStack doesn't send real emails; use `auth.mode=local` for development.
+- **Docker/localstack:** `docker-compose.yml` provisions MongoDB, LocalStack, API, and frontend. Dockerfiles are organized in `docker/` directory (e.g., `Dockerfile.api`, `Dockerfile.frontend`, `Dockerfile.lambda`). LocalStack bootstrapping scripts live in `scripts/localstack` and automatically create S3 buckets, SQS queues with DLQ, and Cognito resources. **Note:** See "Common Pitfalls" for LocalStack limitations.
 - **Coding standards:**
   - Go code must be formatted with `gofmt` and keep comments (when necessary) in Portuguese, while code remains in English.
   - React components use functional style, Material UI theming, and React Query for data fetching.
@@ -179,7 +179,7 @@ Key directories:
   - Design for horizontal scaling
   
 - **Resilience**:
-  - Implement idempotency for all async operations
+  - Implement idempotency for all async operations (see "Common Pitfalls" for implementation details)
   - Use circuit breakers and retries with exponential backoff
   - Graceful degradation and error handling
   - Dead letter queues for failed messages
@@ -257,7 +257,12 @@ When adding a new use case:
 
 ## Commit & Pull Request Guidelines
 
-- Run all checks before committing: `go test ./...`, `make lambda-build`, `npm run build`
+**Validation before committing:**
+- Run `go test ./...` for backend tests
+- Run `make lambda-build` for Lambda binary
+- Run `npm run build` for frontend type-checking
+
+**Documentation:**
 - Commit messages should be clear and descriptive
 - Document architectural changes in `PROJECT.md`
 - Document infrastructure changes in `infra/terraform/README_INFRA.md`
@@ -269,5 +274,3 @@ When adding a new use case:
 - **Main endpoints:** `/accounts`, `/transactions`, `/budgets`, `/goals`, `/categories`, `/reports/summary`
 - **Authentication:** POST `/auth/login` (local mode: see `local_credentials.yaml` for test users)
 - **Database:** MongoDB collection names match entity names (lowercase): `accounts`, `transactions`, `budgets`, `goals`, `categories`, `users`, `processed_transactions`
-
-Before shipping changes, **always run unit tests** after any code changes using `go test ./...`, build the lambda (`make lambda-build`), and `npm run build` to ensure the UI type-checks.
