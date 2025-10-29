@@ -33,7 +33,7 @@ Financial Control é uma plataforma de finanças pessoais construída sobre um b
 
 ## Estratégia de Identificadores
 
-Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go). Documentos legados criados com `ObjectId` do MongoDB devem ser migrados antes de executar os serviços atualizados. Execute `scripts/convert_objectids_to_uuid.js` com `mongosh` para reescrever IDs e referências existentes; depois, remova todos os fallbacks para `ObjectId`.
+Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go).
 
 ## Requisitos
 
@@ -82,18 +82,10 @@ Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go). Document
    npm run dev
    ```
 
-4. **Popule e migre dados**
+4. **Popule dados**
    ```bash
-   # Converter ObjectIds legados para UUIDs (execute uma vez se já tiver dados)
-   mongosh financial-control scripts/convert_objectids_to_uuid.js
-
-   # Seed leve (contas, categorias, algumas transações)
-   mongosh financial-control seed_data.js
-
-   # Datasets maiores (opcional)
-   mongosh financial-control seed_robust_data.js
-   mongosh financial-control seed_recent_transactions.js
-   mongosh financial-control seed_thousand_transactions.js
+   # Script completo de seed (cria usuários, contas, categorias, transações, orçamentos e metas)
+   mongosh financial-control scripts/seed_complete.js
    ```
    Ajuste o comando `docker exec ... mongosh` se estiver executando MongoDB dentro da stack do compose (o nome do container padrão é `financial-control-mongo-1`).
 
@@ -104,15 +96,11 @@ Todas as coleções agora usam strings UUID (`uuid.NewString()` em Go). Document
    make lambda-build    # Produz o artefato da Lambda
    ```
 
-## Referência de Migração e Seed de Dados
+## Referência de Seed de Dados
 
 | Script | Propósito |
 |--------|-----------|
-| `scripts/convert_objectids_to_uuid.js` | Migra coleções do MongoDB de `ObjectId` para strings UUID e reescreve referências. Execute uma vez antes de adotar o novo backend. |
-| `seed_data.js` | Insere um dataset minimal para testes manuais. |
-| `seed_robust_data.js` | Cria três anos de dados históricos, orçamentos e metas para dois usuários. |
-| `seed_recent_transactions.js` | Popula os últimos 30 dias com eventos aleatórios de receita/despesa. |
-| `seed_thousand_transactions.js` | Gera 1.000 transações por usuário para testes de estresse de paginação e relatórios. |
+| `scripts/seed_complete.js` | Script completo de seed que cria dois usuários (vasconcellos e teste), suas contas, categorias, transações, orçamentos e metas para testes e desenvolvimento. |
 
 Todos os scripts são escritos para `mongosh`; canalize-os através de `mongosh <database> < script.js` ou use `docker exec` ao executar MongoDB no Docker.
 
@@ -181,7 +169,7 @@ Consulte `src/configs/local_credentials.example.yaml` para o schema completo.
 
 ## Automação Terraform (Opcional)
 
-O módulo em `infra/terraform` provisiona ECR, ECS Fargate, ALB, S3, SQS (com DLQ), Cognito e uma instância EC2 executando MongoDB via Docker. Início rápido:
+O módulo em `infra/terraform` provisiona AWS App Runner para a API, DocumentDB Serverless para MongoDB, S3, SQS (com DLQ) e Cognito. Início rápido:
 
 ```bash
 cd infra/terraform
@@ -192,16 +180,19 @@ terraform plan
 terraform apply
 ```
 
-Os outputs incluem o nome DNS do ALB, identificadores do Cognito e o IP privado do MongoDB. Revise os custos antes de aplicar (aproximadamente USD 55/mês para o tamanho padrão).
+Os outputs incluem a URL do App Runner, endpoint do DocumentDB, identificadores do Cognito e nome do bucket S3. Revise os custos antes de aplicar (aproximadamente USD 45-50/mês para o tamanho padrão). Consulte `infra/terraform/README_INFRA.md` para documentação detalhada da infraestrutura.
 
 ## Targets Úteis do Make
 
 ```bash
 make api-build         # go build ./src/cmd/api
-make api-run           # executa API com CONFIG_FILE pré-configurado
 make api-test          # go test ./...
 make lambda-build      # build binary da Lambda (linux/amd64)
 make frontend-build    # npm install && npm run build
+make docker-up         # inicia todos os serviços com docker-compose
+make docker-down       # para todos os serviços
+make docker-logs       # visualiza logs de todos os serviços
+make fmt               # formata código Go
 ```
 
 ## Convenções e Leitura Adicional

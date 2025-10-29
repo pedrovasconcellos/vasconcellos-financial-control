@@ -1,0 +1,26 @@
+# Cursor Rules
+
+This file configures Cursor's AI agent behavior for this codebase. It complements and references AGENTS.md.
+
+## Primary Reference
+
+Always read and follow AGENTS.md for project-specific guidelines, architecture, and conventions.
+
+## Key Principles
+
+- Follow clean architecture: domain → use case → infrastructure/adapters
+- Use UUID strings (`uuid.NewString()`) for all identifiers, never ObjectId
+- Always create MongoDB indexes in repository constructors
+- Ensure idempotency for all async operations
+- Run tests before suggesting code: `go test ./...`, `npm run build`, `make lambda-build`
+
+## When Making Changes
+
+1. Check AGENTS.md for architecture patterns
+2. Check BUGS_AND_LIMITATIONS.md for known issues to avoid
+3. Check IMPROVEMENTS.md for planned enhancements
+4. Run relevant tests before completing changes
+5. Follow coding standards: Go in English, comments in Portuguese (when needed)
+
+Reference: See AGENTS.md for complete guidelines.
+

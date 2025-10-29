@@ -1,9 +1,9 @@
 # Provisionamento AWS com App Runner + DocumentDB Serverless
 
 ## Visão Geral
-Esta infraestrutura é otimizada para custos (~USD 60/mês) usando:
+Esta infraestrutura é otimizada para custos (~USD 45-50/mês) usando:
 - **App Runner** para hospedar a API (USD 7/mês)
-- **DocumentDB Serverless** para MongoDB (USD 40-50/mês)
+- **DocumentDB Serverless** para MongoDB (USD 36/mês)
 - Remoção de ALB (App Runner tem balancer embutido)
 - Cognito, S3, SQS para recursos auxiliares
 
@@ -19,10 +19,8 @@ Esta infraestrutura é otimizada para custos (~USD 60/mês) usando:
 | CloudWatch Logs | USD 1-2 |
 | **Total** | **USD 45-50/mês** |
 
-**Cálculo DocumentDB:**
-- Min 2 DCUs × 730h/mês × USD 0.0822/DCU-hora = USD 36/mês
-- STANDARD mode (mais barato)
-- I/O-Optimized seria USD 0.0905/DCU-hora (10% mais caro)
+**Nota**: O cálculo do DocumentDB é: 2 DCUs mínimos × 730h/mês × USD 0.0822/DCU-hora = USD 36/mês (modo STANDARD, mais econômico).
+
 
 ## Arquivos Principais
 
@@ -76,13 +74,13 @@ Após `terraform apply`, você terá:
 |---------|--------------------------|-------------------|
 | Serviço | ECS Fargate + ALB | App Runner (ALB embutido) |
 | DB | EC2 t4g.micro | DocumentDB Serverless |
-| Custo | USD 68/mês | USD 50-55/mês |
+| Custo | USD 68/mês | USD 45-50/mês |
 | Complexidade | Alta | Baixa |
 | Escalabilidade | Manual | Automática |
 
 ## Vantagens
 
-✅ **Custo reduzido**: USD 50 vs USD 68  
+✅ **Custo reduzido**: USD 45-50 vs USD 68  
 ✅ **Sem ALB**: App Runner já inclui load balancer  
 ✅ **Escalabilidade automática**: DocumentDB Serverless  
 ✅ **Menos infra**: Menos recursos para gerenciar  

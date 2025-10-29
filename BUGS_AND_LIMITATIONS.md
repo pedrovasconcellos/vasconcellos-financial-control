@@ -11,10 +11,10 @@ Documento preparado por um arquiteto de software para orientar correções futur
 - **Risco**: Em caso de crash entre as duas operações, saldo e transação ficam inconsistentes.  
 - **Correção**: Introduzir sessão/transaction no MongoDB ou compensação outbox.
 
-### CORS excessivamente permissivo
-- **Contexto**: `src/internal/adapters/http/router.go` permite `AllowOrigins: ["*"]`.  
-- **Risco**: APIs expostas para qualquer origem, facilitando ataques CSRF ou uso indevido em produção.  
-- **Mitigação**: Restringir origens via config.
+### CORS configurável mas com default permissivo
+- **Contexto**: `src/internal/adapters/http/router.go` configura CORS via `params.AllowedOrigins` que vem da configuração. O default em `src/internal/config/config.go` é `["*"]`.  
+- **Risco**: Em produção, se a configuração não restringir origens, APIs ficam expostas para qualquer origem, facilitando ataques CSRF ou uso indevido.  
+- **Mitigação**: Configurar `security.allowedOrigins` no YAML de configuração com origens específicas para produção.
 
 ---
 

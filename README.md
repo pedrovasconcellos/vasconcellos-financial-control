@@ -33,7 +33,7 @@ Financial Control is a personal finance platform built on top of a clean-archite
 
 ## Identifier Strategy
 
-All collections now use UUID strings (`uuid.NewString()` in Go). Legacy documents created with MongoDB `ObjectId` must be migrated before running the updated services. Run `scripts/convert_objectids_to_uuid.js` with `mongosh` to rewrite existing IDs and references; afterwards, remove any fallbacks to `ObjectId`.
+All collections now use UUID strings (`uuid.NewString()` in Go).
 
 ## Requirements
 
@@ -82,18 +82,10 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
    npm run dev
    ```
 
-4. **Seed and migrate data**
+4. **Seed data**
    ```bash
-   # Convert legacy ObjectIds to UUIDs (run once if you already have data)
-   mongosh financial-control scripts/convert_objectids_to_uuid.js
-
-   # Lightweight seed (accounts, categories, a few transactions)
-   mongosh financial-control seed_data.js
-
-   # Larger datasets (optional)
-   mongosh financial-control seed_robust_data.js
-   mongosh financial-control seed_recent_transactions.js
-   mongosh financial-control seed_thousand_transactions.js
+   # Complete seed script (creates users, accounts, categories, transactions, budgets, and goals)
+   mongosh financial-control scripts/seed_complete.js
    ```
    Adjust the `docker exec ... mongosh` command if you are running MongoDB inside the compose stack (container name defaults to `financial-control-mongo-1`).
 
@@ -104,15 +96,11 @@ All collections now use UUID strings (`uuid.NewString()` in Go). Legacy document
    make lambda-build    # Produces the Lambda artifact
    ```
 
-## Data Migration & Seeding Reference
+## Data Seeding Reference
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/convert_objectids_to_uuid.js` | Migrates MongoDB collections from `ObjectId` to UUID strings and rewrites references. Run once before adopting the new backend. |
-| `seed_data.js` | Inserts a minimal dataset for manual testing. |
-| `seed_robust_data.js` | Creates three years of historical data, budgets, and goals for two users. |
-| `seed_recent_transactions.js` | Populates the last 30 days with random income/expense events. |
-| `seed_thousand_transactions.js` | Generates 1,000 transactions per user for stress testing pagination and reports. |
+| `scripts/seed_complete.js` | Complete seed script that creates two users (vasconcellos and teste), their accounts, categories, transactions, budgets, and goals for testing and development. |
 
 All scripts are written for `mongosh`; pipe them through `mongosh <database> < script.js` or use `docker exec` when running MongoDB in Docker.
 
@@ -148,7 +136,7 @@ All scripts are written for `mongosh`; pipe them through `mongosh <database> < s
 
 4. **Frontend**
    ```bash
-   cd frontend
+   cd src/frontend
    npm install
    npm run build
    ```
@@ -181,7 +169,7 @@ Consult `src/configs/local_credentials.example.yaml` for the full schema.
 
 ## Terraform Automation (Optional)
 
-The module in `infra/terraform` provisions ECR, ECS Fargate, ALB, S3, SQS (with DLQ), Cognito, and an EC2 instance running MongoDB via Docker. Quick start:
+The module in `infra/terraform` provisions AWS App Runner for the API, DocumentDB Serverless for MongoDB, S3, SQS (with DLQ), and Cognito. Quick start:
 
 ```bash
 cd infra/terraform
@@ -192,16 +180,19 @@ terraform plan
 terraform apply
 ```
 
-Outputs include the ALB DNS name, Cognito identifiers, and the MongoDB private IP. Review costs before applying (approx. USD 55/month for the default sizing).
+Outputs include the App Runner URL, DocumentDB endpoint, Cognito identifiers, and S3 bucket name. Review costs before applying (approx. USD 45-50/month for the default sizing). See `infra/terraform/README_INFRA.md` for detailed infrastructure documentation.
 
 ## Useful Make Targets
 
 ```bash
 make api-build         # go build ./src/cmd/api
-make api-run           # run API with CONFIG_FILE pre-set
 make api-test          # go test ./...
 make lambda-build      # build Lambda binary (linux/amd64)
 make frontend-build    # npm install && npm run build
+make docker-up         # start all services with docker-compose
+make docker-down       # stop all services
+make docker-logs       # view logs from all services
+make fmt               # format Go code
 ```
 
 ## Conventions & Further Reading

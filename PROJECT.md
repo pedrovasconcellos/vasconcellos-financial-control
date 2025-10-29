@@ -13,7 +13,7 @@
 ## Persistência e Dados
 
 - MongoDB foi escolhido pela flexibilidade na modelagem de transações, contas e metas.
-- Todas as coleções utilizam **UUIDs** (`uuid.NewString()` em Go) como identificadores. Documentos legados com `ObjectId` devem ser migrados usando `scripts/convert_objectids_to_uuid.js`.
+- Todas as coleções utilizam **UUIDs** (`uuid.NewString()` em Go) como identificadores.
 - Cada repositório Mongo cria índices compostos para garantir unicidade e consultas eficientes:
   - `accounts`: `user_id + name` (único), `user_id + created_at`
   - `transactions`: `user_id + occurred_at`, `category_id + occurred_at`
