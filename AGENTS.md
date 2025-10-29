@@ -4,6 +4,28 @@
 
 This file (`AGENTS.md`) provides essential guidelines and context for AI agents working with this codebase. It serves as the primary reference for understanding the project architecture, conventions, and development practices. Always refer to this file when making changes or additions to ensure consistency with the project's standards.
 
+## Documentation Map (Memory Bank Index)
+
+This project uses a distributed memory bank system. Here's where to find specific information:
+
+| Topic | Primary Location | Secondary References |
+|-------|-----------------|---------------------|
+| **Agent Configuration** | `.cursorrules` | Quick rules for Cursor AI |
+| **Agent Identity & Principles** | `AGENTS.md` (this file) | `.cursorrules` (summary) |
+| **Architecture Decisions** | `PROJECT.md` | `AGENTS.md` → "Repository Overview" |
+| **Known Issues & Bugs** | `BUGS_AND_LIMITATIONS.md` | `AGENTS.md` → "Common Pitfalls" |
+| **Future Improvements** | `IMPROVEMENTS.md` | `PROJECT.md` → "Próximos Passos" |
+| **Infrastructure** | `infra/terraform/README_INFRA.md` | `AGENTS.md` → "Deployment Scripts" |
+| **Project Overview** | `README.md` / `README_PTBR.md` | `AGENTS.md` → "Repository Overview" |
+| **Quick Start** | `README.md` → "Local Development" | `AGENTS.md` → "Quick Setup" |
+
+**When working on this project:**
+- Start with `.cursorrules` for agent behavior
+- Read `AGENTS.md` for complete guidelines
+- Check `PROJECT.md` for architectural context
+- Review `BUGS_AND_LIMITATIONS.md` before making changes
+- Consult `IMPROVEMENTS.md` for planned enhancements
+
 ## Agent Identity & Approach
 
 AI agents working on this codebase should adopt the mindset of a **Senior Software Engineer** with:
@@ -33,10 +55,10 @@ This repository hosts a full-stack personal financial platform. When interacting
   - React application lives in `src/frontend/` (Vite + Material UI).
 - **Configuration:** Prefer reading configuration via `src/internal/config.LoadConfig()` which merges environment variables and optional `CONFIG_FILE` YAML. Local development uses `src/configs/local_credentials.yaml` (gitignored) with `auth.mode=local`. **Never commit sensitive values** (encryption keys, AWS credentials); use AWS Secrets Manager in homolog/production.
 - **AWS integrations:** Interact with AWS through the thin wrappers located in `src/internal/infrastructure/aws`. They already handle LocalStack endpoints. For Cognito, rely on the auth providers under `src/internal/infrastructure/auth`.
-- **Storage:** MongoDB repositories reside in `src/internal/infrastructure/mongodb`. When introducing new collections, add indexes in the repository constructors. All collections use **UUID strings** as identifiers (`uuid.NewString()` in Go). The `processed_transactions` collection ensures idempotency in async transaction processing.
-- **Async processing:** Publishing to queues happens through the `port.QueuePublisher` interface. The lambda consumes from the same queue and updates budgets. **Idempotency is critical**: the `processed_transactions` collection prevents duplicate processing. Any new asynchronous feature should follow the same contract and ensure idempotency.
+- **Storage:** MongoDB repositories reside in `src/internal/infrastructure/mongodb`. When introducing new collections, add indexes in the repository constructors. All collections use **UUID strings** as identifiers (`uuid.NewString()` in Go).
+- **Async processing:** Publishing to queues happens through the `port.QueuePublisher` interface. The lambda consumes from the same queue and updates budgets. **Idempotency is critical**: the `processed_transactions` collection ensures duplicate processing prevention. Any new asynchronous feature must implement idempotency (see "Common Pitfalls" for details).
 - **Testing:** Run `go test ./...` for backend code and `npm run build` for the frontend (type-checking). Add unit tests close to the package being tested.
-- **Docker/localstack:** `docker-compose.yml` provisions MongoDB, LocalStack, API, and frontend. Dockerfiles are organized in `docker/` directory (e.g., `Dockerfile.api`, `Dockerfile.frontend`, `Dockerfile.lambda`). LocalStack bootstrapping scripts live in `scripts/localstack` and automatically create S3 buckets, SQS queues with DLQ, and Cognito resources. **Note:** LocalStack doesn't send real emails; use `auth.mode=local` for development.
+- **Docker/localstack:** `docker-compose.yml` provisions MongoDB, LocalStack, API, and frontend. Dockerfiles are organized in `docker/` directory (e.g., `Dockerfile.api`, `Dockerfile.frontend`, `Dockerfile.lambda`). LocalStack bootstrapping scripts live in `scripts/localstack` and automatically create S3 buckets, SQS queues with DLQ, and Cognito resources. **Note:** See "Common Pitfalls" for LocalStack limitations.
 - **Coding standards:**
   - Go code must be formatted with `gofmt` and keep comments (when necessary) in Portuguese, while code remains in English.
   - React components use functional style, Material UI theming, and React Query for data fetching.
@@ -157,7 +179,7 @@ Key directories:
   - Design for horizontal scaling
   
 - **Resilience**:
-  - Implement idempotency for all async operations
+  - Implement idempotency for all async operations (see "Common Pitfalls" for implementation details)
   - Use circuit breakers and retries with exponential backoff
   - Graceful degradation and error handling
   - Dead letter queues for failed messages
@@ -172,16 +194,20 @@ Key directories:
 - **UUID vs ObjectId**: Always use `uuid.NewString()` for new IDs.
 - **Idempotency**: When working with async processing, always check `processed_transactions` collection before processing to avoid duplicates.
 - **LocalStack limitations**: LocalStack doesn't send real emails. Always use `auth.mode=local` for local development.
-- **CORS in production**: Never use `AllowOrigins: ["*"]` outside development. Check `BUGS_AND_LIMITATIONS.md` for known security issues.
-- **Transaction consistency**: Account balance updates and transaction recording should be in the same transaction. See known bugs in `BUGS_AND_LIMITATIONS.md`.
+- **CORS in production**: Never use `AllowOrigins: ["*"]` outside development. See `BUGS_AND_LIMITATIONS.md` → "CORS configurável mas com default permissivo".
+- **Transaction consistency**: Account balance updates and transaction recording should be in the same transaction. See `BUGS_AND_LIMITATIONS.md` → "Falta de controle transacional nas atualizações de saldo" and `IMPROVEMENTS.md` → "Consistência transacional".
+
+**For detailed issues and limitations, refer to `BUGS_AND_LIMITATIONS.md`.**
 
 ## Known Limitations
 
-Refer to `BUGS_AND_LIMITATIONS.md` for detailed list, but key points:
-- MongoDB transactions not fully implemented (balance + transaction may be inconsistent on crash)
-- Frontend token refresh not implemented (expires without renewal)
-- CORS allows all origins in some configurations (security risk)
-- No tracing/metrics (difficult to debug production issues)
+Refer to `BUGS_AND_LIMITATIONS.md` for detailed list with context and mitigation strategies. Key points:
+- MongoDB transactions not fully implemented (balance + transaction may be inconsistent on crash) - See `BUGS_AND_LIMITATIONS.md` → "Falta de controle transacional"
+- Frontend token refresh not implemented (expires without renewal) - See `BUGS_AND_LIMITATIONS.md` → "Armazenamento de tokens sem renovação"
+- CORS allows all origins in some configurations (security risk) - See `BUGS_AND_LIMITATIONS.md` → "CORS configurável mas com default permissivo"
+- No tracing/metrics (difficult to debug production issues) - See `BUGS_AND_LIMITATIONS.md` → "Falta de tracing e métricas"
+
+**See `IMPROVEMENTS.md` for planned enhancements addressing these limitations.**
 
 ## Code Examples
 
@@ -231,7 +257,12 @@ When adding a new use case:
 
 ## Commit & Pull Request Guidelines
 
-- Run all checks before committing: `go test ./...`, `make lambda-build`, `npm run build`
+**Validation before committing:**
+- Run `go test ./...` for backend tests
+- Run `make lambda-build` for Lambda binary
+- Run `npm run build` for frontend type-checking
+
+**Documentation:**
 - Commit messages should be clear and descriptive
 - Document architectural changes in `PROJECT.md`
 - Document infrastructure changes in `infra/terraform/README_INFRA.md`
@@ -243,5 +274,3 @@ When adding a new use case:
 - **Main endpoints:** `/accounts`, `/transactions`, `/budgets`, `/goals`, `/categories`, `/reports/summary`
 - **Authentication:** POST `/auth/login` (local mode: see `local_credentials.yaml` for test users)
 - **Database:** MongoDB collection names match entity names (lowercase): `accounts`, `transactions`, `budgets`, `goals`, `categories`, `users`, `processed_transactions`
-
-Before shipping changes, **always run unit tests** after any code changes using `go test ./...`, build the lambda (`make lambda-build`), and `npm run build` to ensure the UI type-checks.
