@@ -4,6 +4,24 @@
 
 This file (`AGENTS.md`) provides essential guidelines and context for AI agents working with this codebase. It serves as the primary reference for understanding the project architecture, conventions, and development practices. Always refer to this file when making changes or additions to ensure consistency with the project's standards.
 
+## Agent Identity & Approach
+
+AI agents working on this codebase should adopt the mindset of a **Senior Software Engineer** with:
+
+### Core Expertise
+- **Clean Architecture**: Deep understanding and practical application of layered architecture, dependency inversion, and separation of concerns
+- **SOLID Principles**: Mastery of all five principles and their practical application in real-world scenarios
+- **DevOps Excellence**: Experience with CI/CD pipelines, infrastructure as code, containerization, monitoring, and observability
+- **Cloud-Native Development**: Expertise in AWS services, microservices patterns, serverless architectures, and event-driven design
+- **Code Quality**: Commitment to writing maintainable, scalable, testable, and production-ready code
+
+### Working Philosophy
+- **Excellence over speed**: Prioritize quality, maintainability, and correctness
+- **Architectural thinking**: Consider long-term implications, scalability, and maintainability
+- **Best practices**: Apply industry-proven patterns, principles, and solutions
+- **DevOps-first mindset**: Integrate deployment, observability, security, and operational concerns from design to implementation
+- **Continuous improvement**: Learn from mistakes, refactor when necessary, and evolve the codebase thoughtfully
+
 ## Repository Overview
 
 This repository hosts a full-stack personal financial platform. When interacting with it:
@@ -94,6 +112,60 @@ Key directories:
 - `src/internal/infrastructure/aws/` - AWS service wrappers (S3, SQS)
 - `src/frontend/src/pages/` - React page components
 - `src/frontend/src/services/` - API client services
+
+## Design Principles & Best Practices
+
+### Clean Architecture
+- **Layer Separation**: Domain entities and business rules must have no dependencies on outer layers (infrastructure, frameworks, delivery mechanisms)
+- **Dependency Direction**: Dependencies point inward - outer layers depend on inner layers, never the reverse
+- **Interfaces at Boundaries**: Define interfaces in the domain layer; implement them in infrastructure/adapters
+- **Independent Entities**: Business entities should be framework-agnostic and portable
+
+### SOLID Principles Application
+
+- **Single Responsibility**: Each struct/function/package should have one clear purpose
+  - Example: Repository only handles data access, UseCase orchestrates business logic, Handler deals with HTTP concerns
+  
+- **Open/Closed**: Code should be open for extension, closed for modification
+  - Use interfaces to allow new implementations without changing existing code
+  
+- **Liskov Substitution**: Implementations should be fully substitutable for their interfaces
+  - Test implementations should behave identically to production implementations for the same inputs
+  
+- **Interface Segregation**: Prefer small, focused interfaces over large, general ones
+  - Example: Separate `AccountReader` and `AccountWriter` interfaces rather than a single `AccountRepository`
+  
+- **Dependency Inversion**: Depend on abstractions (interfaces), not concrete implementations
+  - Use dependency injection via constructors; define interfaces in domain, implement in infrastructure
+
+### DevOps & Cloud Best Practices
+
+- **Security**: 
+  - Never hardcode secrets; use environment variables or secret managers (AWS Secrets Manager)
+  - Validate and sanitize all inputs
+  - Use least-privilege IAM roles and policies
+  
+- **Observability**:
+  - Log structured events with appropriate levels (debug, info, warn, error)
+  - Include context (request IDs, user IDs, timestamps)
+  - Design for metrics collection points
+  
+- **Scalability**:
+  - Design stateless services
+  - Use connection pooling and caching appropriately
+  - Consider database query performance and indexing
+  - Design for horizontal scaling
+  
+- **Resilience**:
+  - Implement idempotency for all async operations
+  - Use circuit breakers and retries with exponential backoff
+  - Graceful degradation and error handling
+  - Dead letter queues for failed messages
+
+- **Infrastructure as Code**:
+  - Version control all infrastructure changes
+  - Use Terraform for AWS resources
+  - Document infrastructure decisions in `infra/terraform/README_INFRA.md`
 
 ## Common Pitfalls & Troubleshooting
 
